@@ -203,7 +203,7 @@ enum {
     else
     {
         //Make a token effort to sanitise the application name so that it's safe to use in filenames.
-        appName = [appName.lowercaseString stringByReplacingOccurrencesOfString: @":" withString: @" - "];
+        appName = [appName stringByReplacingOccurrencesOfString: @":" withString: @" - "];
         appName = [appName stringByReplacingOccurrencesOfString: @"/" withString: @""];
         
         *ioValue = appName;
@@ -323,22 +323,13 @@ enum {
 
 - (BOOL) validateOrganizationURL: (id *)ioValue error: (NSError **)outError
 {
-    NSString *URLString = *ioValue;
+    NSURL *URL = *ioValue;
     
-    if (!URLString.length)
+    if (!URL)
     {
         if (outError)
             *outError = [self _validationErrorWithCode: kBBValidationValueMissing
                                                message: @"Please specify a website URL for your organization. This will be linked from the About window of the application."];
-        return NO;
-    }
-    
-    if (![NSURL URLWithString: URLString])
-    {
-        if (outError)
-            *outError = [self _validationErrorWithCode: kBBValidationInvalidValue
-                                               message: @"The specified URL is malformed or incomplete."];
-        
         return NO;
     }
     return YES;
