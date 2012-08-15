@@ -20,8 +20,16 @@ enum {
 };
 
 
+@interface BBAppDelegate ()
+
+@property (assign, getter=isBusy) BOOL busy;
+
+@end
+
+
 @implementation BBAppDelegate
 @synthesize helpLinks = _helpLinks;
+@synthesize busy = _busy;
 
 #pragma mark -
 #pragma mark Application lifecycle
@@ -485,10 +493,26 @@ enum {
             //Dismiss any previous sheet before displaying error/success
             [self.window.attachedSheet orderOut: self];
             
-            NSURL *bundledAppURL = [[NSBundle mainBundle] URLForResource: @"Boxer Standalone" withExtension: @"app"];
+            [self createAppAtDestinationURL: panel.URL];
+        }
+    }];
+}
+
+- (void) createAppAtDestinationURL: (NSURL *)destinationURL
+{
+    NSURL *bundledAppURL = [[NSBundle mainBundle] URLForResource: @"Boxer Standalone" withExtension: @"app"];
+    
+    self.busy = YES;
+    
+    dispatch_queue_t queue = dispatch_queue_create("CreationQueue", DISPATCH_QUEUE_SERIAL);
+    dispatch_async(queue, ^{
+        NSError *creationError;
+        BOOL created = [self createAppAtDestinationURL: destinationURL usingAppAtSourceURL: bundledAppURL error: &creationError];
+        
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            self.busy = NO;
             
-            NSError *creationError;
-            BOOL created = [self createAppAtDestinationURL: panel.URL usingAppAtSourceURL: bundledAppURL error: &creationError];
+            [[NSSound soundNamed: @"Glass"] play];
             
             if (!created)
             {
@@ -500,12 +524,11 @@ enum {
             }
             else
             {
-                [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs: [NSArray arrayWithObject: panel.URL]];
+                [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs: [NSArray arrayWithObject: destinationURL]];
             }
-        }
-    }];
+        });
+    });
 }
-
 
 - (BOOL) createAppAtDestinationURL: (NSURL *)destinationURL
                usingAppAtSourceURL: (NSURL *)sourceURL

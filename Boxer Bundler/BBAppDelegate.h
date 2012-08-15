@@ -26,6 +26,8 @@
 @property (copy, nonatomic) NSString *organizationName;
 @property (copy, nonatomic) NSURL *organizationURL;
 
+@property (readonly, getter=isBusy) BOOL busy;
+
 //An editable array of help links
 @property (retain, nonatomic) NSMutableArray *helpLinks;
 
