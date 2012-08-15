@@ -1,0 +1,324 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9F014BB115DC5CF200624183 /* Boxer Standalone.app in Resources */ = {isa = PBXBuildFile; fileRef = 9F014BB015DC5CF200624183 /* Boxer Standalone.app */; };
+		9FDFB49B15DC04B7004EA615 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FDFB49A15DC04B7004EA615 /* Cocoa.framework */; };
+		9FDFB4A515DC04B7004EA615 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9FDFB4A315DC04B7004EA615 /* InfoPlist.strings */; };
+		9FDFB4A715DC04B7004EA615 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FDFB4A615DC04B7004EA615 /* main.m */; };
+		9FDFB4AB15DC04B7004EA615 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 9FDFB4A915DC04B7004EA615 /* Credits.rtf */; };
+		9FDFB4AE15DC04B7004EA615 /* BBAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FDFB4AD15DC04B7004EA615 /* BBAppDelegate.m */; };
+		9FDFB4B115DC04B7004EA615 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9FDFB4AF15DC04B7004EA615 /* MainMenu.xib */; };
+		9FDFB4B915DC0BF8004EA615 /* BBIconDropzone.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FDFB4B815DC0BF8004EA615 /* BBIconDropzone.m */; };
+		9FDFB4BC15DC1866004EA615 /* BBURLTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FDFB4BB15DC1866004EA615 /* BBURLTransformer.m */; };
+		9FDFB4BE15DC1BB3004EA615 /* UserDefaults.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9FDFB4BD15DC1BB3004EA615 /* UserDefaults.plist */; };
+		9FDFB4C015DC1F9B004EA615 /* app.icns in Resources */ = {isa = PBXBuildFile; fileRef = 9FDFB4BF15DC1F9B004EA615 /* app.icns */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		9F014BB015DC5CF200624183 /* Boxer Standalone.app */ = {isa = PBXFileReference; lastKnownFileType = wrapper.application; name = "Boxer Standalone.app"; path = "../../Boxer/build/Release/Boxer Standalone.app"; sourceTree = "<group>"; };
+		9FDFB49615DC04B7004EA615 /* Boxer Bundler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Boxer Bundler.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9FDFB49A15DC04B7004EA615 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		9FDFB49D15DC04B7004EA615 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		9FDFB49E15DC04B7004EA615 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		9FDFB49F15DC04B7004EA615 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		9FDFB4A215DC04B7004EA615 /* Boxer Bundler-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Boxer Bundler-Info.plist"; sourceTree = "<group>"; };
+		9FDFB4A415DC04B7004EA615 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		9FDFB4A615DC04B7004EA615 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		9FDFB4A815DC04B7004EA615 /* Boxer Bundler-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Boxer Bundler-Prefix.pch"; sourceTree = "<group>"; };
+		9FDFB4AA15DC04B7004EA615 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
+		9FDFB4AC15DC04B7004EA615 /* BBAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BBAppDelegate.h; sourceTree = "<group>"; };
+		9FDFB4AD15DC04B7004EA615 /* BBAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BBAppDelegate.m; sourceTree = "<group>"; };
+		9FDFB4B015DC04B7004EA615 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		9FDFB4B715DC0BF8004EA615 /* BBIconDropzone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BBIconDropzone.h; sourceTree = "<group>"; };
+		9FDFB4B815DC0BF8004EA615 /* BBIconDropzone.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BBIconDropzone.m; sourceTree = "<group>"; };
+		9FDFB4BA15DC1866004EA615 /* BBURLTransformer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BBURLTransformer.h; sourceTree = "<group>"; };
+		9FDFB4BB15DC1866004EA615 /* BBURLTransformer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BBURLTransformer.m; sourceTree = "<group>"; };
+		9FDFB4BD15DC1BB3004EA615 /* UserDefaults.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = UserDefaults.plist; sourceTree = "<group>"; };
+		9FDFB4BF15DC1F9B004EA615 /* app.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = app.icns; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9FDFB49315DC04B7004EA615 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9FDFB49B15DC04B7004EA615 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9FDFB48B15DC04B7004EA615 = {
+			isa = PBXGroup;
+			children = (
+				9FDFB4A015DC04B7004EA615 /* Boxer Bundler */,
+				9FDFB49915DC04B7004EA615 /* Frameworks */,
+				9FDFB49715DC04B7004EA615 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9FDFB49715DC04B7004EA615 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9FDFB49615DC04B7004EA615 /* Boxer Bundler.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9FDFB49915DC04B7004EA615 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9FDFB49A15DC04B7004EA615 /* Cocoa.framework */,
+				9FDFB49C15DC04B7004EA615 /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		9FDFB49C15DC04B7004EA615 /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9FDFB49D15DC04B7004EA615 /* AppKit.framework */,
+				9FDFB49E15DC04B7004EA615 /* CoreData.framework */,
+				9FDFB49F15DC04B7004EA615 /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		9FDFB4A015DC04B7004EA615 /* Boxer Bundler */ = {
+			isa = PBXGroup;
+			children = (
+				9FDFB4AC15DC04B7004EA615 /* BBAppDelegate.h */,
+				9FDFB4AD15DC04B7004EA615 /* BBAppDelegate.m */,
+				9FDFB4AF15DC04B7004EA615 /* MainMenu.xib */,
+				9FDFB4A115DC04B7004EA615 /* Supporting Files */,
+				9FDFB4B715DC0BF8004EA615 /* BBIconDropzone.h */,
+				9FDFB4B815DC0BF8004EA615 /* BBIconDropzone.m */,
+				9FDFB4BA15DC1866004EA615 /* BBURLTransformer.h */,
+				9FDFB4BB15DC1866004EA615 /* BBURLTransformer.m */,
+			);
+			path = "Boxer Bundler";
+			sourceTree = "<group>";
+		};
+		9FDFB4A115DC04B7004EA615 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				9F014BB015DC5CF200624183 /* Boxer Standalone.app */,
+				9FDFB4BF15DC1F9B004EA615 /* app.icns */,
+				9FDFB4A215DC04B7004EA615 /* Boxer Bundler-Info.plist */,
+				9FDFB4A315DC04B7004EA615 /* InfoPlist.strings */,
+				9FDFB4A615DC04B7004EA615 /* main.m */,
+				9FDFB4A815DC04B7004EA615 /* Boxer Bundler-Prefix.pch */,
+				9FDFB4A915DC04B7004EA615 /* Credits.rtf */,
+				9FDFB4BD15DC1BB3004EA615 /* UserDefaults.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9FDFB49515DC04B7004EA615 /* Boxer Bundler */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9FDFB4B415DC04B7004EA615 /* Build configuration list for PBXNativeTarget "Boxer Bundler" */;
+			buildPhases = (
+				9FDFB49215DC04B7004EA615 /* Sources */,
+				9FDFB49315DC04B7004EA615 /* Frameworks */,
+				9FDFB49415DC04B7004EA615 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Boxer Bundler";
+			productName = "Boxer Bundler";
+			productReference = 9FDFB49615DC04B7004EA615 /* Boxer Bundler.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9FDFB48D15DC04B7004EA615 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				CLASSPREFIX = BB;
+				LastUpgradeCheck = 0440;
+				ORGANIZATIONNAME = "Alun Bestor";
+			};
+			buildConfigurationList = 9FDFB49015DC04B7004EA615 /* Build configuration list for PBXProject "Boxer Bundler" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 9FDFB48B15DC04B7004EA615;
+			productRefGroup = 9FDFB49715DC04B7004EA615 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9FDFB49515DC04B7004EA615 /* Boxer Bundler */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9FDFB49415DC04B7004EA615 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9FDFB4A515DC04B7004EA615 /* InfoPlist.strings in Resources */,
+				9FDFB4AB15DC04B7004EA615 /* Credits.rtf in Resources */,
+				9FDFB4B115DC04B7004EA615 /* MainMenu.xib in Resources */,
+				9FDFB4BE15DC1BB3004EA615 /* UserDefaults.plist in Resources */,
+				9FDFB4C015DC1F9B004EA615 /* app.icns in Resources */,
+				9F014BB115DC5CF200624183 /* Boxer Standalone.app in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9FDFB49215DC04B7004EA615 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9FDFB4A715DC04B7004EA615 /* main.m in Sources */,
+				9FDFB4AE15DC04B7004EA615 /* BBAppDelegate.m in Sources */,
+				9FDFB4B915DC0BF8004EA615 /* BBIconDropzone.m in Sources */,
+				9FDFB4BC15DC1866004EA615 /* BBURLTransformer.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		9FDFB4A315DC04B7004EA615 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				9FDFB4A415DC04B7004EA615 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		9FDFB4A915DC04B7004EA615 /* Credits.rtf */ = {
+			isa = PBXVariantGroup;
+			children = (
+				9FDFB4AA15DC04B7004EA615 /* en */,
+			);
+			name = Credits.rtf;
+			sourceTree = "<group>";
+		};
+		9FDFB4AF15DC04B7004EA615 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				9FDFB4B015DC04B7004EA615 /* en */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		9FDFB4B215DC04B7004EA615 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		9FDFB4B315DC04B7004EA615 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		9FDFB4B515DC04B7004EA615 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Boxer Bundler/Boxer Bundler-Prefix.pch";
+				INFOPLIST_FILE = "Boxer Bundler/Boxer Bundler-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		9FDFB4B615DC04B7004EA615 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Boxer Bundler/Boxer Bundler-Prefix.pch";
+				INFOPLIST_FILE = "Boxer Bundler/Boxer Bundler-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9FDFB49015DC04B7004EA615 /* Build configuration list for PBXProject "Boxer Bundler" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FDFB4B215DC04B7004EA615 /* Debug */,
+				9FDFB4B315DC04B7004EA615 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9FDFB4B415DC04B7004EA615 /* Build configuration list for PBXNativeTarget "Boxer Bundler" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FDFB4B515DC04B7004EA615 /* Debug */,
+				9FDFB4B615DC04B7004EA615 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9FDFB48D15DC04B7004EA615 /* Project object */;
+}
