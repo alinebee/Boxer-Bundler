@@ -580,25 +580,17 @@ enum {
     
     NSMutableDictionary *appPlistContents = [NSMutableDictionary dictionaryWithContentsOfURL: appPlistURL];
     
-    NSMutableDictionary *substitutions = [NSMutableDictionary dictionary];
     
     CFGregorianDate currentDate = CFAbsoluteTimeGetGregorianDate(CFAbsoluteTimeGetCurrent(), CFTimeZoneCopySystem());
     
-    [substitutions setObject: [NSString stringWithFormat: @"%04d", currentDate.year] forKey: @"{{YEAR}}"];
-    if (self.organizationName)
-        [substitutions setObject: self.organizationName forKey: @"{{ORGANIZATION_NAME}}"];
-    
-    if (self.appBundleIdentifier)
-        [substitutions setObject: self.appBundleIdentifier forKey: @"{{BUNDLE_IDENTIFIER}}"];
-    
-    if (self.appName)
-        [substitutions setObject: self.appName forKey: @"{{APPLICATION_NAME}}"];
-    
-    if (self.organizationURL)
-        [substitutions setObject: self.organizationURL.absoluteString forKey: @"{{ORGANIZATION_URL}}"];
-    
-    if (self.appVersion)
-        [substitutions setObject: self.appVersion forKey: @"{{APPLICATION_VERSION}}"];
+    NSMutableDictionary *substitutions = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+                                          self.organizationName, @"{{ORGANIZATION_NAME}}",
+                                          self.appBundleIdentifier, @"{{BUNDLE_IDENTIFIER}}",
+                                          self.appName, @"{{APPLICATION_NAME}}",
+                                          self.organizationURL.absoluteString, @"{{ORGANIZATION_URL}}",
+                                          self.appVersion, @"{{APPLICATION_VERSION}}",
+                                          [NSString stringWithFormat: @"%04d", currentDate.year], @"{{YEAR}}",
+                                          nil];
     
     //Replace all instances of the strings above across every key.
     //Note that this will currently not recurse into arrays and dictionaries.
@@ -617,6 +609,10 @@ enum {
             [appPlistContents setObject: value forKey: key];
         }
     }
+    
+    //Manually replace the version and bundle identifier, which don't use these substitutions
+    [appPlistContents setObject: self.appBundleIdentifier forKey: (NSString *)kCFBundleIdentifierKey];
+    [appPlistContents setObject: self.appVersion forKey: @"CFBundleShortVersionString"];
     
     //Add in the specified help links
     if (self.helpLinks.count)
