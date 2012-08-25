@@ -26,6 +26,9 @@
 @property (copy, nonatomic) NSString *organizationName;
 @property (copy, nonatomic) NSString *organizationURL;
 
+@property (nonatomic) BOOL showsHotkeyWarning;
+@property (nonatomic) BOOL ctrlClickEnabled;
+
 @property (readonly, getter=isBusy) BOOL busy;
 
 //An editable array of help links
@@ -41,6 +44,7 @@
 - (IBAction) chooseIconURL: (id)sender;
 
 - (IBAction) importSettingsFromExistingApp: (id)sender;
+
 
 #pragma mark -
 #pragma mark Helper class methods

@@ -117,6 +117,23 @@
         appInfo[@"BXHelpLinks"] = helpLinks;
     
     
+    //Tweak options in the user defaults and game defaults if necessary.
+    if (!self.ctrlClickEnabled)
+    {
+        NSURL *gameDefaultsURL = [appResourceURL URLByAppendingPathComponent: @"GameDefaults.plist"];
+        NSMutableDictionary *gameDefaults = [NSMutableDictionary dictionaryWithContentsOfURL: gameDefaultsURL];
+        gameDefaults[@"mouseButtonModifierRight"] = @0;
+        [gameDefaults writeToURL: gameDefaultsURL atomically: YES];
+    }
+    
+    if (!self.showsHotkeyWarning)
+    {
+        NSURL *userDefaultsURL = [appResourceURL URLByAppendingPathComponent: @"UserDefaults.plist"];
+        NSMutableDictionary *userDefaults = [NSMutableDictionary dictionaryWithContentsOfURL: userDefaultsURL];
+        userDefaults[@"showHotkeyWarning"] = @NO;
+        [userDefaults writeToURL: userDefaultsURL atomically: YES];
+    }
+    
     //Now let's get to work on the help book.
     NSString *helpbookName = appInfo[@"CFBundleHelpBookFolder"];
     if (helpbookName)
@@ -407,9 +424,14 @@
     NSMutableArray *helpLinks = [NSMutableArray arrayWithCapacity: self.helpLinks.count];
     for (NSDictionary *linkInfo in self.helpLinks)
     {
+        //Ignore incomplete help links
+        NSString *title = linkInfo[@"title"], *url = linkInfo[@"url"];
+        if (!title || !url)
+            continue;
+        
         NSDictionary *plistVersion = @{
-            @"BXHelpLinkTitle": linkInfo[@"title"],
-            @"BXHelpLinkURL": linkInfo[@"url"]
+            @"BXHelpLinkTitle": title,
+            @"BXHelpLinkURL": url
         };
         
         [helpLinks addObject: plistVersion];

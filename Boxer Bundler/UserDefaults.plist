@@ -4,6 +4,10 @@
 <dict>
 	<key>appVersion</key>
 	<string>1.0</string>
+	<key>ctrlClickEnabled</key>
+	<true/>
+	<key>showsHotkeyWarning</key>
+	<true/>
 	<key>helpLinks</key>
 	<array>
 		<dict>

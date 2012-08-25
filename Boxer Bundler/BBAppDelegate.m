@@ -30,15 +30,9 @@ enum {
 
 
 @implementation BBAppDelegate
+//Defined because we have custom setters for these
 @synthesize appName = _appName;
-@synthesize appBundleIdentifier = _appBundleIdentifier;
-@synthesize appVersion = _appVersion;
-@synthesize appIconURL = _appIconURL;
-@synthesize organizationName = _organizationName;
-@synthesize organizationURL = _organizationURL;
 @synthesize gameboxURL = _gameboxURL;
-@synthesize helpLinks = _helpLinks;
-@synthesize busy = _busy;
 
 #pragma mark -
 #pragma mark Application lifecycle
@@ -90,7 +84,7 @@ enum {
 
 + (NSArray *) _persistableKeys
 {
-    return @[@"appName", @"appBundleIdentifier", @"appVersion", @"organizationName", @"organizationURL"];
+    return @[@"appName", @"appBundleIdentifier", @"appVersion", @"organizationName", @"organizationURL", @"showsHotkeyWarning", @"ctrlClickEnabled"];
 }
 
 - (void) _loadParamsFromUserDefaults
@@ -195,9 +189,12 @@ enum {
     if (!gameboxName.pathExtension.length)
         gameboxName = [gameboxName stringByAppendingPathExtension: @"boxer"];
     
+    
+    //First, import everything we can from the application's Info.plist file.
     self.gameboxURL = [app URLForResource: gameboxName withExtension: nil];
     self.appBundleIdentifier = [app bundleIdentifier];
     self.appVersion = [app objectForInfoDictionaryKey: @"CFBundleShortVersionString"];
+    self.appName = [app objectForInfoDictionaryKey: @"CFBundleName"];
     
     NSString *iconName = [app objectForInfoDictionaryKey: @"CFBundleIconFile"];
     if (!iconName.pathExtension.length)
@@ -221,6 +218,22 @@ enum {
     }
     self.helpLinks = helpLinks;
     
+    //Next, load toggleable settings from the application's user defaults and game defaults.
+    NSURL *appUserDefaultsURL = [app URLForResource: @"UserDefaults.plist" withExtension: nil];
+    NSURL *appGameDefaultsURL = [app URLForResource: @"GameDefaults.plist" withExtension: nil];
+    NSDictionary *appUserDefaults = [NSDictionary dictionaryWithContentsOfURL: appUserDefaultsURL];
+    NSDictionary *appGameDefaults = [NSDictionary dictionaryWithContentsOfURL: appGameDefaultsURL];
+    
+    NSNumber *showsHotkeyWarningFlag = [appUserDefaults objectForKey: @"showHotkeyWarning"];
+    if (showsHotkeyWarningFlag)
+        self.showsHotkeyWarning = showsHotkeyWarningFlag.boolValue;
+    
+    NSNumber *ctrlClickShortcutMask = [appGameDefaults objectForKey: @"mouseButtonModifierRight"];
+    if (ctrlClickShortcutMask)
+    {
+        self.ctrlClickEnabled = (ctrlClickShortcutMask.integerValue == 262144);
+    }
+    
     return YES;
 }
 
@@ -237,11 +250,6 @@ enum {
         //Update the application name whenever the gamebox changes
         self.appName = URL.lastPathComponent.stringByDeletingPathExtension;
     }
-}
-
-+ (NSSet *) keyPathsForValuesAffectingAppIcon
-{
-    return [NSSet setWithObject: @"appIconURL"];
 }
 
 - (void) setAppName: (NSString *)name
@@ -508,6 +516,13 @@ enum {
 
 - (IBAction) exportApp: (id)sender
 {
+    //Try to clear the first responder, so that if we were in the middle of editing a field
+    //then those changes will be committed. If a field refuses to give up the first responder
+    //(which usually means there's a validation error) then don't proceed.
+    if (self.window.firstResponder && ![self.window makeFirstResponder: nil])
+        return;
+    
+    
     NSSavePanel *panel = [NSSavePanel savePanel];
     panel.nameFieldStringValue = [self.appName stringByAppendingPathExtension: @"app"];
     panel.allowedFileTypes = @[(NSString *)kUTTypeApplicationBundle];
