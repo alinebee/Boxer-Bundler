@@ -17,7 +17,6 @@
     
     id instance = [[self alloc] init];
     [NSValueTransformer setValueTransformer: instance forName: name];
-    [instance release];
 }
 
 + (Class) transformedValueClass { return [NSString class]; }

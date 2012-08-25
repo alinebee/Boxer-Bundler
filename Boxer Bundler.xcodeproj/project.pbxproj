@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		9F014BB115DC5CF200624183 /* Boxer Standalone.app in Resources */ = {isa = PBXBuildFile; fileRef = 9F014BB015DC5CF200624183 /* Boxer Standalone.app */; };
+		9F653C2515E90B0F00D2694D /* NSURL+BXFilePaths.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F653C2415E90B0F00D2694D /* NSURL+BXFilePaths.m */; };
+		9F653C2815E90C2B00D2694D /* BBAppDelegate+AppExporting.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F653C2715E90C2B00D2694D /* BBAppDelegate+AppExporting.m */; };
 		9FDFB49B15DC04B7004EA615 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FDFB49A15DC04B7004EA615 /* Cocoa.framework */; };
 		9FDFB4A515DC04B7004EA615 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9FDFB4A315DC04B7004EA615 /* InfoPlist.strings */; };
 		9FDFB4A715DC04B7004EA615 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FDFB4A615DC04B7004EA615 /* main.m */; };
@@ -22,6 +24,10 @@
 
 /* Begin PBXFileReference section */
 		9F014BB015DC5CF200624183 /* Boxer Standalone.app */ = {isa = PBXFileReference; lastKnownFileType = wrapper.application; name = "Boxer Standalone.app"; path = "../../Boxer/build/Release/Boxer Standalone.app"; sourceTree = "<group>"; };
+		9F653C2315E90B0F00D2694D /* NSURL+BXFilePaths.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSURL+BXFilePaths.h"; path = "../../Boxer/Other Sources/BXToolkit/NSURL+BXFilePaths.h"; sourceTree = "<group>"; };
+		9F653C2415E90B0F00D2694D /* NSURL+BXFilePaths.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSURL+BXFilePaths.m"; path = "../../Boxer/Other Sources/BXToolkit/NSURL+BXFilePaths.m"; sourceTree = "<group>"; };
+		9F653C2615E90C2B00D2694D /* BBAppDelegate+AppExporting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "BBAppDelegate+AppExporting.h"; sourceTree = "<group>"; };
+		9F653C2715E90C2B00D2694D /* BBAppDelegate+AppExporting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "BBAppDelegate+AppExporting.m"; sourceTree = "<group>"; };
 		9FDFB49615DC04B7004EA615 /* Boxer Bundler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Boxer Bundler.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9FDFB49A15DC04B7004EA615 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		9FDFB49D15DC04B7004EA615 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -55,6 +61,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9F653C2015E90ADC00D2694D /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				9F653C2215E90AF300D2694D /* BXToolkit */,
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		9F653C2215E90AF300D2694D /* BXToolkit */ = {
+			isa = PBXGroup;
+			children = (
+				9F653C2315E90B0F00D2694D /* NSURL+BXFilePaths.h */,
+				9F653C2415E90B0F00D2694D /* NSURL+BXFilePaths.m */,
+			);
+			name = BXToolkit;
+			sourceTree = "<group>";
+		};
 		9FDFB48B15DC04B7004EA615 = {
 			isa = PBXGroup;
 			children = (
@@ -94,8 +117,11 @@
 		9FDFB4A015DC04B7004EA615 /* Boxer Bundler */ = {
 			isa = PBXGroup;
 			children = (
+				9F653C2015E90ADC00D2694D /* Other Sources */,
 				9FDFB4AC15DC04B7004EA615 /* BBAppDelegate.h */,
 				9FDFB4AD15DC04B7004EA615 /* BBAppDelegate.m */,
+				9F653C2615E90C2B00D2694D /* BBAppDelegate+AppExporting.h */,
+				9F653C2715E90C2B00D2694D /* BBAppDelegate+AppExporting.m */,
 				9FDFB4AF15DC04B7004EA615 /* MainMenu.xib */,
 				9FDFB4A115DC04B7004EA615 /* Supporting Files */,
 				9FDFB4B715DC0BF8004EA615 /* BBIconDropzone.h */,
@@ -193,6 +219,8 @@
 				9FDFB4AE15DC04B7004EA615 /* BBAppDelegate.m in Sources */,
 				9FDFB4B915DC0BF8004EA615 /* BBIconDropzone.m in Sources */,
 				9FDFB4BC15DC1866004EA615 /* BBURLTransformer.m in Sources */,
+				9F653C2515E90B0F00D2694D /* NSURL+BXFilePaths.m in Sources */,
+				9F653C2815E90C2B00D2694D /* BBAppDelegate+AppExporting.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -276,6 +304,7 @@
 		9FDFB4B515DC04B7004EA615 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Boxer Bundler/Boxer Bundler-Prefix.pch";
@@ -288,6 +317,7 @@
 		9FDFB4B615DC04B7004EA615 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Boxer Bundler/Boxer Bundler-Prefix.pch";

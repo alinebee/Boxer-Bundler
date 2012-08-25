@@ -14,22 +14,22 @@
 #pragma mark -
 #pragma mark Properties
 
-@property (assign) IBOutlet NSWindow *window;
+@property (weak) IBOutlet NSWindow *window;
+@property (weak) IBOutlet BBIconDropzone *iconDropzone;
 
-@property (copy, nonatomic) NSURL *gameboxURL;
+@property (strong, nonatomic) NSURL *gameboxURL;
+@property (strong, nonatomic) NSURL *appIconURL;
 @property (copy, nonatomic) NSString *appName;
 @property (copy, nonatomic) NSString *appBundleIdentifier;
 @property (copy, nonatomic) NSString *appVersion;
-@property (copy, nonatomic) NSURL *appIconURL;
-@property (readonly, nonatomic) NSImage *appIcon;
 
 @property (copy, nonatomic) NSString *organizationName;
-@property (copy, nonatomic) NSURL *organizationURL;
+@property (copy, nonatomic) NSString *organizationURL;
 
 @property (readonly, getter=isBusy) BOOL busy;
 
 //An editable array of help links
-@property (retain, nonatomic) NSMutableArray *helpLinks;
+@property (strong, nonatomic) NSMutableArray *helpLinks;
 
 
 #pragma mark -
@@ -38,8 +38,7 @@
 //Create a bundle.
 - (IBAction) createBundle: (id)sender;
 
-//Called when a new icon is dropped into the dropzone.
-- (IBAction) dropIcon: (BBIconDropzone *)sender;
+- (IBAction) chooseIconURL: (id)sender;
 
 #pragma mark -
 #pragma mark Helper class methods

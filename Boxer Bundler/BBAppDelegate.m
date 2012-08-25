@@ -6,9 +6,10 @@
 //  Copyright (c) 2012 Alun Bestor. All rights reserved.
 //
 
-#import "BBAppDelegate.h"
+#import "BBAppDelegate+AppExporting.h"
 #import "BBURLTransformer.h"
 #import "BBIconDropzone.h"
+#import "NSURL+BXFilePaths.h"
 
 NSString * const kBBRowIndexSetDropType = @"BBRowIndexSetDropType";
 
@@ -28,6 +29,13 @@ enum {
 
 
 @implementation BBAppDelegate
+@synthesize appName = _appName;
+@synthesize appBundleIdentifier = _appBundleIdentifier;
+@synthesize appVersion = _appVersion;
+@synthesize appIconURL = _appIconURL;
+@synthesize organizationName = _organizationName;
+@synthesize organizationURL = _organizationURL;
+@synthesize gameboxURL = _gameboxURL;
 @synthesize helpLinks = _helpLinks;
 @synthesize busy = _busy;
 
@@ -43,13 +51,6 @@ enum {
     }
 }
 
-- (void) dealloc
-{
-    self.helpLinks = nil;
-    
-    [super dealloc];
-}
-
 - (void) applicationDidFinishLaunching: (NSNotification *)aNotification
 {
     //Load initial defaults
@@ -57,6 +58,12 @@ enum {
     NSDictionary *defaults	= [NSDictionary dictionaryWithContentsOfFile: defaultsPath];
     
     [[NSUserDefaults standardUserDefaults] registerDefaults: defaults];
+    
+    [self _loadParamsFromUserDefaults];
+    
+    //Set up the two-way binding for our dropzone
+    [self.iconDropzone bind: @"imageURL" toObject: self withKeyPath: @"appIconURL" options: nil];
+    [self bind: @"appIconURL" toObject: self.iconDropzone withKeyPath: @"imageURL" options: nil];
     
     [self.window makeKeyAndOrderFront: self];
 }
@@ -66,30 +73,159 @@ enum {
     return YES;
 }
 
+- (void) applicationWillTerminate: (NSNotification *)notification
+{
+    [self _persistParamsIntoUserDefaults];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
 
 #pragma mark -
-#pragma mark Properties
+#pragma mark Property persistence
 
-- (NSURL *) gameboxURL
++ (NSArray *) _persistableKeys
 {
-    NSString *path = [[NSUserDefaults standardUserDefaults] objectForKey: @"gameboxPath"];
-    if (path.length)
-        return [NSURL fileURLWithPath: path];
-    else
-        return nil;
+    return @[@"appName", @"appBundleIdentifier", @"appVersion", @"organizationName", @"organizationURL"];
 }
+
+- (void) _loadParamsFromUserDefaults
+{
+    NSArray *keys = [self.class _persistableKeys];
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    
+    //Several values cannot be imported directly and need to be handled separately.
+    NSData *gameboxBookmark = [defaults dataForKey: @"gameboxURLBookmark"];
+    if (gameboxBookmark)
+    {
+        self.gameboxURL = [NSURL URLByResolvingBookmarkData: gameboxBookmark
+                                                    options: NSURLBookmarkResolutionWithoutUI
+                                              relativeToURL: nil
+                                        bookmarkDataIsStale: NULL
+                                                      error: NULL];
+    }
+    
+    NSData *appIconBookmark = [defaults dataForKey: @"appIconURLBookmark"];
+    if (appIconBookmark)
+    {
+        self.appIconURL = [NSURL URLByResolvingBookmarkData: appIconBookmark
+                                                    options: NSURLBookmarkResolutionWithoutUI
+                                              relativeToURL: nil
+                                        bookmarkDataIsStale: NULL
+                                                      error: NULL];
+    }
+    
+    //The help links array needs to be deeply mutable, so we need to do extra work when loading it in.
+    NSArray *savedHelpLinks = [defaults arrayForKey: @"helpLinks"];
+    if (savedHelpLinks.count)
+    {
+        NSMutableArray *mutableLinks = [[NSMutableArray alloc] initWithCapacity: savedHelpLinks.count];
+        for (NSDictionary *linkInfo in savedHelpLinks)
+        {
+            [mutableLinks addObject: [linkInfo mutableCopy]];
+        }
+        
+        self.helpLinks = mutableLinks;
+    }
+    
+    //The rest of the values can be loaded as-is.
+    for (NSString *key in keys)
+    {
+        id value = [defaults objectForKey: key];
+        [self setValue: value forKey: key];
+    }
+}
+
+- (void) _persistParamsIntoUserDefaults
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    
+    //Most of the values can be copied straight across.
+    NSArray *keys = [self.class _persistableKeys];
+    NSDictionary *values = [self dictionaryWithValuesForKeys: keys];
+    [defaults setValuesForKeysWithDictionary: values];
+    
+    //...but we have to handle some of the values by hand, so that userdefaults
+    //won't poo itself over them.
+    NSData *gameboxBookmark = [self.gameboxURL bookmarkDataWithOptions: NSURLBookmarkCreationSuitableForBookmarkFile
+                                        includingResourceValuesForKeys: nil
+                                                         relativeToURL: nil
+                                                                 error: NULL];
+    
+    NSData *appIconBookmark = [self.appIconURL bookmarkDataWithOptions: NSURLBookmarkCreationSuitableForBookmarkFile
+                                        includingResourceValuesForKeys: nil
+                                                         relativeToURL: nil
+                                                                 error: NULL];
+    
+    if (gameboxBookmark)
+        [defaults setObject: gameboxBookmark forKey: @"gameboxURLBookmark"];
+    
+    if (appIconBookmark)
+        [defaults setObject: appIconBookmark forKey: @"appIconURLBookmark"];
+}
+
+- (void) _loadParamsFromAppAtURL: (NSURL *)appURL error: (NSError **)outError
+{
+    
+}
+
+#pragma mark -
+#pragma mark Custom getters and setters
 
 - (void) setGameboxURL: (NSURL *)URL
 {
-    URL = URL.URLByStandardizingPath;
     if (![URL isEqual: self.gameboxURL])
     {
-        [[NSUserDefaults standardUserDefaults] setObject: URL.path forKey: @"gameboxPath"];
+        _gameboxURL = URL;
         
         //Update the application name whenever the gamebox changes
         self.appName = URL.lastPathComponent.stringByDeletingPathExtension;
     }
 }
+
++ (NSSet *) keyPathsForValuesAffectingAppIcon
+{
+    return [NSSet setWithObject: @"appIconURL"];
+}
+
+- (void) setAppName: (NSString *)name
+{
+    if (![self.appName isEqualToString: name])
+    {
+        _appName = [name copy];
+        
+        //Synchronize the bundle identifier whenever the application name changes
+        if (name.length)
+        {
+            NSString *fragment = [self.class bundleIdentifierFragmentFromString: name];
+            [self setAppBundleIdentifierFragment: fragment];
+        }
+    }
+}
+
+- (void) setAppBundleIdentifierFragment: (NSString *)fragment
+{
+    NSString *baseIdentifier;
+    if (self.appBundleIdentifier.length)
+    {
+        NSArray *components = [self.appBundleIdentifier componentsSeparatedByString: @"."];
+        if (components.count > 2)
+            components = [components subarrayWithRange: NSMakeRange(0, 2)];
+        baseIdentifier = [components componentsJoinedByString: @"."];
+    }
+    else
+    {
+        baseIdentifier = @"com.companyname";
+    }
+    
+    NSString *fullIdentifier = [NSString stringWithFormat: @"%@.%@", baseIdentifier, fragment];
+    self.appBundleIdentifier = fullIdentifier;
+}
+
+
+
+#pragma mark -
+#pragma mark Property validation
 
 - (BOOL) validateGameboxURL: (id *)ioValue error: (NSError **)outError
 {
@@ -113,23 +249,6 @@ enum {
         else return NO;
     }
     return YES;
-}
-
-
-
-- (void) setAppIconURL: (NSURL *)URL
-{
-    URL = URL.URLByStandardizingPath;
-    [[NSUserDefaults standardUserDefaults] setObject: URL.path forKey: @"appIconPath"];
-}
-
-- (NSURL *) appIconURL
-{
-    NSString *iconPath = [[NSUserDefaults standardUserDefaults] objectForKey: @"appIconPath"];
-    if (iconPath.length)
-        return [NSURL fileURLWithPath: iconPath];
-    else
-        return nil;
 }
 
 - (BOOL) validateAppIconURL: (id *)ioValue error: (NSError **)outError
@@ -157,48 +276,6 @@ enum {
     return YES;
 }
 
-
-
-+ (NSSet *) keyPathsForValuesAffectingAppIcon
-{
-    return [NSSet setWithObject: @"appIconURL"];
-}
-
-- (NSImage *) appIcon
-{
-    if (self.appIconURL)
-        return [[[NSImage alloc] initWithContentsOfURL: self.appIconURL] autorelease];
-    else
-        return nil;
-}
-
-//Defined only to keep the UI binding happy, as otherwise it would throw an assertion if the user
-//clears the icon selection.
-- (void) setAppIcon: (NSImage *)icon
-{
-}
-
-
-- (void) setAppName: (NSString *)name
-{
-    if (![self.appName isEqualToString: name])
-    {
-        [[NSUserDefaults standardUserDefaults] setObject: name forKey: @"appName"];
-        
-        //Synchronize the bundle identifier whenever the application name changes
-        if (name.length)
-        {
-            NSString *fragment = [self.class bundleIdentifierFragmentFromString: name];
-            [self setAppBundleIdentifierFragment: fragment];
-        }
-    }
-}
-
-- (NSString *) appName
-{
-    return [[NSUserDefaults standardUserDefaults] objectForKey: @"appName"];
-}
-
 - (BOOL) validateAppName: (id *)ioValue error: (NSError **)outError
 {
     NSString *appName = *ioValue;
@@ -217,16 +294,6 @@ enum {
         *ioValue = appName;
     }
     return YES;
-}
-
-- (void) setAppBundleIdentifier: (NSString *)identifier
-{
-    [[NSUserDefaults standardUserDefaults] setObject: identifier forKey: @"appBundleIdentifier"];
-}
-
-- (NSString *) appBundleIdentifier
-{
-    return [[NSUserDefaults standardUserDefaults] objectForKey: @"appBundleIdentifier"];
 }
 
 - (BOOL) validateAppBundleIdentifier: (id *)ioValue error: (NSError **)outError
@@ -249,36 +316,6 @@ enum {
     return YES;
 }
 
-- (void) setAppBundleIdentifierFragment: (NSString *)fragment
-{
-    NSString *baseIdentifier;
-    if (self.appBundleIdentifier.length)
-    {
-        NSArray *components = [self.appBundleIdentifier componentsSeparatedByString: @"."];
-        if (components.count > 2)
-            components = [components subarrayWithRange: NSMakeRange(0, 2)];
-        baseIdentifier = [components componentsJoinedByString: @"."];
-    }
-    else
-    {
-        baseIdentifier = @"com.companyname";
-    }
-    
-    NSString *fullIdentifier = [NSString stringWithFormat: @"%@.%@", baseIdentifier, fragment];
-    self.appBundleIdentifier = fullIdentifier;
-}
-
-- (NSString *) appVersion
-{
-    return [[NSUserDefaults standardUserDefaults] objectForKey: @"appVersion"];
-}
-
-- (void) setAppVersion: (NSString *)appVersion
-{
-    [[NSUserDefaults standardUserDefaults] setObject: appVersion
-                                              forKey: @"appVersion"];
-}
-
 - (BOOL) validateAppVersion: (id *)ioValue error: (NSError **)outError
 {
     NSString *version = *ioValue;
@@ -287,18 +324,6 @@ enum {
         *ioValue = @"1.0";
     }
     return YES;
-}
-
-
-- (NSString *) organizationName
-{
-    return [[NSUserDefaults standardUserDefaults] objectForKey: @"organizationName"];
-}
-
-- (void) setOrganizationName: (NSString *)organizationName
-{
-    [[NSUserDefaults standardUserDefaults] setObject: organizationName
-                                              forKey: @"organizationName"];
 }
 
 - (BOOL) validateOrganizationName: (id *)ioValue error: (NSError **)outError
@@ -314,24 +339,9 @@ enum {
     return YES;
 }
 
-- (NSURL *) organizationURL
-{
-    NSString *URLString = [[NSUserDefaults standardUserDefaults] objectForKey: @"organizationURL"];
-    if (URLString.length)
-        return [NSURL URLWithString: URLString];
-    else
-        return nil;
-}
-
-- (void) setOrganizationURL: (NSURL *)organizationURL
-{
-    [[NSUserDefaults standardUserDefaults] setObject: organizationURL.absoluteString
-                                              forKey: @"organizationURL"];
-}
-
 - (BOOL) validateOrganizationURL: (id *)ioValue error: (NSError **)outError
 {
-    NSURL *URL = *ioValue;
+    NSString *URL = *ioValue;
     
     if (!URL)
     {
@@ -345,7 +355,7 @@ enum {
 
 - (NSError *) _validationErrorWithCode: (NSInteger)errCode message: (NSString *)message
 {
-    NSDictionary *userInfo = [NSDictionary dictionaryWithObject: message forKey: NSLocalizedDescriptionKey];
+    NSDictionary *userInfo = @{NSLocalizedDescriptionKey: message};
     return [NSError errorWithDomain: kBBValidationErrorDomain code: errCode userInfo: userInfo];
 }
 
@@ -354,62 +364,20 @@ enum {
 #pragma mark -
 #pragma mark Editing help links
 
-- (NSArray *) helpLinks
-{
-    //Create the help links array the first time it is needed
-    if (!_helpLinks)
-    {
-        NSArray *helpLinks = [[NSUserDefaults standardUserDefaults] objectForKey: @"helpLinks"];
-        _helpLinks = [[NSMutableArray alloc] initWithCapacity: helpLinks.count];
-        for (NSDictionary *linkInfo in helpLinks)
-        {
-            [_helpLinks addObject: [[linkInfo mutableCopy] autorelease]];
-        }
-    }
-    return _helpLinks;
-}
-
-- (void) _syncHelpLinks
-{
-    [[NSUserDefaults standardUserDefaults] setObject: self.helpLinks forKey: @"helpLinks"];
-}
-
-- (void) setHelpLinks: (NSMutableArray *)helpLinks
-{
-    if (![helpLinks isEqualToArray: _helpLinks])
-    {
-        [_helpLinks release];
-        _helpLinks = [helpLinks retain];
-        
-        [self _syncHelpLinks];
-    }
-}
-
 - (void) insertObject: (NSMutableDictionary *)object inHelpLinksAtIndex: (NSUInteger)index
 {
     [self.helpLinks insertObject: object atIndex: index];
-    
-    [self _syncHelpLinks];
 }
 
 - (void) removeObjectFromHelpLinksAtIndex: (NSUInteger)index
 {
     [self.helpLinks removeObjectAtIndex: index];
-    [self _syncHelpLinks];
-}
-
-- (void) tableView: (NSTableView *)tableView
-    setObjectValue: (id)object
-    forTableColumn: (NSTableColumn *)tableColumn
-               row: (NSInteger)row
-{
-    [self _syncHelpLinks];
 }
 
 - (BOOL) tableView: (NSTableView *)tableView writeRowsWithIndexes: (NSIndexSet *)rowIndexes
       toPasteboard: (NSPasteboard *)pboard
 {
-    NSArray *dragTypes = [NSArray arrayWithObject: kBBRowIndexSetDropType];
+    NSArray *dragTypes = @[kBBRowIndexSetDropType];
     [tableView registerForDraggedTypes: dragTypes];
     [pboard declareTypes: dragTypes owner: self];
     
@@ -477,12 +445,11 @@ enum {
 #pragma mark -
 #pragma mark Actions
 
-
 - (IBAction) createBundle: (id)sender
 {
     NSSavePanel *panel = [NSSavePanel savePanel];
     panel.nameFieldStringValue = [self.appName stringByAppendingPathExtension: @"app"];
-    panel.allowedFileTypes = [NSArray arrayWithObject: (NSString *)kUTTypeApplicationBundle];
+    panel.allowedFileTypes = @[(NSString *)kUTTypeApplicationBundle];
     panel.extensionHidden = YES;
     panel.canSelectHiddenExtension = NO;
     
@@ -493,268 +460,43 @@ enum {
             //Dismiss any previous sheet before displaying error/success
             [self.window.attachedSheet orderOut: self];
             
-            [self createAppAtDestinationURL: panel.URL];
+            self.busy = YES;
+            [self createAppAtDestinationURL: panel.URL completion:^(NSURL *appURL, NSError *error) {
+                self.busy = NO;
+                if (appURL)
+                {
+                    [[NSSound soundNamed: @"Glass"] play];
+                    [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs: @[appURL]];
+                }
+                else
+                {
+                    [NSApp presentError: error
+                         modalForWindow: self.window
+                               delegate: nil
+                     didPresentSelector: NULL
+                            contextInfo: NULL];
+                }
+            }];
         }
     }];
 }
 
-- (void) createAppAtDestinationURL: (NSURL *)destinationURL
+- (IBAction) chooseIconURL: (id)sender
 {
-    NSURL *bundledAppURL = [[NSBundle mainBundle] URLForResource: @"Boxer Standalone" withExtension: @"app"];
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
     
-    self.busy = YES;
+    panel.allowedFileTypes = @[(NSString *)kUTTypeAppleICNS];
+    panel.allowsOtherFileTypes = NO;
+    panel.allowsMultipleSelection = NO;
+    panel.showsHiddenFiles = NO;
+    panel.treatsFilePackagesAsDirectories = YES;
     
-    dispatch_queue_t queue = dispatch_queue_create("CreationQueue", DISPATCH_QUEUE_SERIAL);
-    dispatch_async(queue, ^{
-        NSError *creationError;
-        BOOL created = [self createAppAtDestinationURL: destinationURL usingAppAtSourceURL: bundledAppURL error: &creationError];
-        
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            self.busy = NO;
-            
-            [[NSSound soundNamed: @"Glass"] play];
-            
-            if (!created)
-            {
-                [NSApp presentError: creationError
-                     modalForWindow: self.window
-                           delegate: nil
-                 didPresentSelector: NULL
-                        contextInfo: NULL];
-            }
-            else
-            {
-                [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs: [NSArray arrayWithObject: destinationURL]];
-            }
-        });
-    });
-}
-
-- (BOOL) createAppAtDestinationURL: (NSURL *)destinationURL
-               usingAppAtSourceURL: (NSURL *)sourceURL
-                             error: (NSError **)outError
-{
-    NSFileManager *manager = [[[NSFileManager alloc] init] autorelease];
-    
-    //Delete any file at the destination
-    [manager removeItemAtURL: destinationURL error: NULL];
-    
-    BOOL copied = [manager copyItemAtURL: sourceURL toURL: destinationURL error: outError];
-    if (!copied)
-    {
-        return NO;
-    }
-    
-    
-    //Copy across the gamebox.
-    NSURL *appResourceURL = [destinationURL URLByAppendingPathComponent: @"Contents/Resources/"];
-    NSString *gameboxDestinationName = [self.appName stringByAppendingPathExtension: @"boxer"];
-    NSURL *gameboxDestinationURL = [appResourceURL URLByAppendingPathComponent: gameboxDestinationName];
-    
-    BOOL copiedGamebox = [manager copyItemAtURL: self.gameboxURL toURL: gameboxDestinationURL error: outError];
-    if (!copiedGamebox)
-    {
-        [manager removeItemAtURL: destinationURL error: NULL];
-        return NO;
-    }
-    //Clean up the gamebox while we're at it: eliminate any custom icon and unhide the file extension.
-    [[NSWorkspace sharedWorkspace] setIcon: nil forFile: gameboxDestinationURL.path options: 0];
-    [gameboxDestinationURL setResourceValue: [NSNumber numberWithBool: NO] forKey: NSURLHasHiddenExtensionKey error: nil];
-
-    
-    //Copy across the application icon.
-    if (self.appIconURL)
-    {
-        NSURL *iconDestinationURL = [appResourceURL URLByAppendingPathComponent: @"app.icns"];
-        BOOL copiedIcon = [manager copyItemAtURL: self.appIconURL toURL: iconDestinationURL error: outError];
-        if (!copiedIcon)
+    [panel beginSheetModalForWindow: self.window completionHandler: ^(NSInteger result) {
+        if (result == NSFileHandlingPanelOKButton)
         {
-            [manager removeItemAtURL: destinationURL error: NULL];
-            return NO;
+            self.appIconURL = panel.URL;
         }
-    }
-    
-    
-    //Rewrite the application's Info.plist to fill it with our own data.
-    NSURL *appPlistURL = [destinationURL URLByAppendingPathComponent: @"Contents/Info.plist"];
-    
-    NSMutableDictionary *appPlistContents = [NSMutableDictionary dictionaryWithContentsOfURL: appPlistURL];
-    
-    
-    CFGregorianDate currentDate = CFAbsoluteTimeGetGregorianDate(CFAbsoluteTimeGetCurrent(), CFTimeZoneCopySystem());
-    
-    NSMutableDictionary *substitutions = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-                                          self.organizationName, @"{{ORGANIZATION_NAME}}",
-                                          self.appBundleIdentifier, @"{{BUNDLE_IDENTIFIER}}",
-                                          self.appName, @"{{APPLICATION_NAME}}",
-                                          self.organizationURL.absoluteString, @"{{ORGANIZATION_URL}}",
-                                          self.appVersion, @"{{APPLICATION_VERSION}}",
-                                          [NSString stringWithFormat: @"%04d", currentDate.year], @"{{YEAR}}",
-                                          nil];
-    
-    //Replace all instances of the strings above across every key.
-    //Note that this will currently not recurse into arrays and dictionaries.
-    for (NSString *key in appPlistContents.allKeys)
-    {
-        id value = [appPlistContents valueForKey: key];
-        
-        if ([value respondsToSelector: @selector(stringByReplacingOccurrencesOfString:withString:)])
-        {
-            for (NSString *pattern in substitutions)
-            {
-                NSString *replacement = [substitutions objectForKey: pattern];
-                value = [value stringByReplacingOccurrencesOfString: pattern withString: replacement];
-            }
-            
-            [appPlistContents setObject: value forKey: key];
-        }
-    }
-    
-    //Manually replace the version and bundle identifier, which don't use these substitutions
-    [appPlistContents setObject: self.appBundleIdentifier forKey: (NSString *)kCFBundleIdentifierKey];
-    [appPlistContents setObject: self.appVersion forKey: @"CFBundleShortVersionString"];
-    
-    //Add in the specified help links
-    if (self.helpLinks.count)
-    {
-        NSMutableArray *helpLinks = [NSMutableArray arrayWithCapacity: self.helpLinks.count];
-        for (NSDictionary *linkInfo in self.helpLinks)
-        {
-            NSDictionary *plistVersion = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-                                          [linkInfo objectForKey: @"title"], @"BXHelpLinkTitle",
-                                          [linkInfo objectForKey: @"url"],  @"BXHelpLinkURL",
-                                          nil];
-            
-            [helpLinks addObject: plistVersion];
-        }
-        
-        [appPlistContents setObject: helpLinks forKey: @"BXHelpLinks"];
-    }
-    
-    [appPlistContents setObject: self.appName forKey: @"BXBundledGameboxName"];
-    
-    if (self.appIconURL)
-        [appPlistContents setObject: @"app.icns" forKey: @"CFBundleIconFile"];
-    
-    
-    //Phew! Now let's get to work on the help book.
-    NSString *helpbookName = [appPlistContents objectForKey: @"CFBundleHelpBookFolder"];
-    if (helpbookName)
-    {
-        //While we're at it, rename the help book to reflect the application name.
-        NSString *destinationHelpbookName = [self.appName stringByAppendingPathExtension: @"help"];
-        
-        NSURL *helpbookURL = [appResourceURL URLByAppendingPathComponent: helpbookName];
-        NSURL *destinationHelpbookURL = [appResourceURL URLByAppendingPathComponent: destinationHelpbookName];
-        
-        //Since this isn't a necessary step, ignore it if it happens to fail.
-        BOOL renamedHelpbook = [manager moveItemAtURL: helpbookURL toURL: destinationHelpbookURL error: NULL];
-        if (renamedHelpbook)
-        {
-            helpbookURL = destinationHelpbookURL;
-            [appPlistContents setObject: destinationHelpbookName forKey: @"CFBundleHelpBookFolder"];
-        }
-        
-        NSURL *helpbookPlistURL = [helpbookURL URLByAppendingPathComponent: @"Contents/Info.plist"];
-        NSMutableDictionary *helpbookPlistContents = [NSMutableDictionary dictionaryWithContentsOfURL: helpbookPlistURL];
-        
-        for (NSString *key in helpbookPlistContents.allKeys)
-        {
-            id value = [helpbookPlistContents valueForKey: key];
-            
-            if ([value respondsToSelector: @selector(stringByReplacingOccurrencesOfString:withString:)])
-            {
-                for (NSString *pattern in substitutions)
-                {
-                    NSString *replacement = [substitutions objectForKey: pattern];
-                    value = [value stringByReplacingOccurrencesOfString: pattern withString: replacement];
-                }
-                
-                [helpbookPlistContents setObject: value forKey: key];
-            }
-        }
-        
-        //Extract 16x16 version of the icon URL to use for the help book.
-        NSString *helpbookIconName = [helpbookPlistContents objectForKey: @"HPDBookIconPath"];
-        if (self.appIconURL && helpbookIconName)
-        {
-            
-            NSString *helpbookIcon2xName = [NSString stringWithFormat: @"%@@2x.%@",
-                                            helpbookIconName.stringByDeletingPathExtension,
-                                            helpbookIconName.pathExtension];
-            
-            NSURL *helpbookResourceURL = [helpbookURL URLByAppendingPathComponent: @"Contents/Resources/"];
-            NSURL *helpbookIconURL = [helpbookResourceURL URLByAppendingPathComponent: helpbookIconName];
-            NSURL *helpbookIcon2xURL = [helpbookResourceURL URLByAppendingPathComponent: helpbookIcon2xName];
-            
-            
-            NSImage *icon = [[NSImage alloc] initWithContentsOfURL: self.appIconURL];
-            
-            NSBitmapImageRep *sourceRep = nil;
-            NSBitmapImageRep *source2xRep = nil;
-            NSSize targetSize = NSMakeSize(16, 16), target2xSize = NSMakeSize(32, 32);
-            for (NSBitmapImageRep *rep in icon.representations)
-            {
-                if (![rep isKindOfClass: [NSBitmapImageRep class]])
-                    continue;
-                
-                NSSize size = rep.size;
-                //Bingo, we found the 16x16 representations
-                if (NSEqualSizes(size, targetSize))
-                {
-                    NSSize pixelSize = NSMakeSize(rep.pixelsWide, rep.pixelsHigh);
-                    
-                    //Regular 16x16 icon found!
-                    if (!sourceRep && NSEqualSizes(pixelSize, targetSize))
-                    {
-                        sourceRep = rep;
-                    }
-                    else if (!source2xRep && NSEqualSizes(pixelSize, target2xSize))
-                    {
-                        source2xRep = rep;
-                    }
-                }
-                //Stop looking once we've found good candidates for both resolutions.
-                if (sourceRep && source2xRep) break;
-            }
-            
-            if (sourceRep)
-            {
-                NSData *data = [sourceRep representationUsingType: NSPNGFileType properties: nil];
-                BOOL wroteIcon = [data writeToURL: helpbookIconURL options: NSAtomicWrite error: outError];
-                if (!wroteIcon)
-                {
-                    [manager removeItemAtURL: destinationURL error: NULL];
-                    return NO;
-                }
-            }
-            
-            if (source2xRep)
-            {
-                NSData *data = [source2xRep representationUsingType: NSPNGFileType properties: nil];
-                BOOL wroteIcon = [data writeToURL: helpbookIcon2xURL options: NSAtomicWrite error: outError];
-                if (!wroteIcon)
-                {
-                    [manager removeItemAtURL: destinationURL error: NULL];
-                    return NO;
-                }
-            }
-        }
-        
-        //Write all of our changes to the helpbook's plist back into the helpbook.
-        [helpbookPlistContents writeToURL: helpbookPlistURL atomically: YES];
-    }
-    
-    
-    //Write all of our changes to the app's plist back into the app.
-    [appPlistContents writeToURL: appPlistURL atomically: YES];
-    
-    return YES;
-}
-
-- (IBAction) dropIcon: (BBIconDropzone *)sender
-{
-    self.appIconURL = sender.imageURL;
+    }];
 }
 
 

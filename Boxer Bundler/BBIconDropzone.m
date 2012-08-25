@@ -9,7 +9,7 @@
 #import "BBIconDropzone.h"
 
 @implementation BBIconDropzone
-@synthesize imageURL;
+@synthesize imageURL = _imageURL;
 
 - (id) initWithFrame: (NSRect)frame
 {
@@ -21,12 +21,6 @@
     }
     
     return self;
-}
-
-- (void) dealloc
-{
-    self.imageURL = nil;
-    [super dealloc];
 }
 
 - (BOOL) performDragOperation: (id <NSDraggingInfo>)sender
@@ -50,6 +44,16 @@
         }
     }
     return NO;
+}
+
+- (void) setImageURL: (NSURL *)imageURL
+{
+    if (![imageURL isEqual: self.imageURL])
+    {
+        _imageURL = imageURL;
+        
+        self.image = [[NSImage alloc] initWithContentsOfURL: imageURL];
+    }
 }
 
 @end
