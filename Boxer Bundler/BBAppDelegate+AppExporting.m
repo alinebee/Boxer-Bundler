@@ -91,16 +91,19 @@
     }
     
     //Fill in various variables in the info.plist.
-    CFGregorianDate currentDate = CFAbsoluteTimeGetGregorianDate(CFAbsoluteTimeGetCurrent(), CFTimeZoneCopySystem());
+    CFTimeZoneRef systemTimeZone = CFTimeZoneCopySystem();
+    CFGregorianDate currentDate = CFAbsoluteTimeGetGregorianDate(CFAbsoluteTimeGetCurrent(), systemTimeZone);
+    CFRelease(systemTimeZone);
     
-    NSMutableDictionary *substitutions = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-                                          self.organizationName, @"{{ORGANIZATION_NAME}}",
-                                          self.appBundleIdentifier, @"{{BUNDLE_IDENTIFIER}}",
-                                          self.appName, @"{{APPLICATION_NAME}}",
-                                          self.organizationURL, @"{{ORGANIZATION_URL}}",
-                                          self.appVersion, @"{{APPLICATION_VERSION}}",
-                                          [NSString stringWithFormat: @"%04d", currentDate.year], @"{{YEAR}}",
-                                          nil];
+    NSString *year = [NSString stringWithFormat: @"%04d", currentDate.year];
+    NSDictionary *substitutions = @{
+        @"{{ORGANIZATION_NAME}}":   self.organizationName,
+        @"{{BUNDLE_IDENTIFIER}}":   self.appBundleIdentifier,
+        @"{{APPLICATION_NAME}}":    self.appName,
+        @"{{ORGANIZATION_URL}}":    self.organizationURL,
+        @"{{APPLICATION_VERSION}}": self.appVersion,
+        @"{{YEAR}}":                year
+    };
     
     [self _rewritePlist: appInfo withSubstitutions: substitutions];
     
@@ -404,10 +407,10 @@
     NSMutableArray *helpLinks = [NSMutableArray arrayWithCapacity: self.helpLinks.count];
     for (NSDictionary *linkInfo in self.helpLinks)
     {
-        NSDictionary *plistVersion = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-                                      linkInfo[@"title"], @"BXHelpLinkTitle",
-                                      linkInfo[@"url"],  @"BXHelpLinkURL",
-                                      nil];
+        NSDictionary *plistVersion = @{
+            @"BXHelpLinkTitle": linkInfo[@"title"],
+            @"BXHelpLinkURL": linkInfo[@"url"]
+        };
         
         [helpLinks addObject: plistVersion];
     }

@@ -36,9 +36,11 @@
 #pragma mark Actions
 
 //Create a bundle.
-- (IBAction) createBundle: (id)sender;
+- (IBAction) exportApp: (id)sender;
 
 - (IBAction) chooseIconURL: (id)sender;
+
+- (IBAction) importSettingsFromExistingApp: (id)sender;
 
 #pragma mark -
 #pragma mark Helper class methods

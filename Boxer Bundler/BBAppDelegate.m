@@ -17,7 +17,8 @@ NSString * const kBBValidationErrorDomain = @"net.washboardabs.boxer-bundler.val
 
 enum {
     kBBValidationValueMissing,
-    kBBValidationInvalidValue
+    kBBValidationInvalidValue,
+    kBBValidationUnsupportedApplication
 };
 
 
@@ -51,7 +52,7 @@ enum {
     }
 }
 
-- (void) applicationDidFinishLaunching: (NSNotification *)aNotification
+- (void) applicationWillFinishLaunching: (NSNotification *)aNotification
 {
     //Load initial defaults
     NSString *defaultsPath	= [[NSBundle mainBundle] pathForResource: @"UserDefaults" ofType: @"plist"];
@@ -65,6 +66,10 @@ enum {
     [self.iconDropzone bind: @"imageURL" toObject: self withKeyPath: @"appIconURL" options: nil];
     [self bind: @"appIconURL" toObject: self.iconDropzone withKeyPath: @"imageURL" options: nil];
     
+}
+
+- (void) applicationDidFinishLaunching: (NSNotification *)notification
+{
     [self.window makeKeyAndOrderFront: self];
 }
 
@@ -162,12 +167,63 @@ enum {
     
     if (appIconBookmark)
         [defaults setObject: appIconBookmark forKey: @"appIconURLBookmark"];
+    
+    [defaults setObject: self.helpLinks forKey: @"helpLinks"];
 }
 
-- (void) _loadParamsFromAppAtURL: (NSURL *)appURL error: (NSError **)outError
+- (BOOL) _loadParamsFromAppAtURL: (NSURL *)appURL error: (NSError **)outError
 {
+    NSBundle *app = [NSBundle bundleWithURL: appURL];
     
+    NSString *gameboxName = [app objectForInfoDictionaryKey: @"BXBundledGameboxName"];
+    
+    if (gameboxName == nil)
+    {
+        if (outError)
+        {
+            NSString *errorDescriptionFormat = NSLocalizedString(@"%@ is not a bundled game application.",
+                                                                 @"Error message shown when the user tries to load settings from an application that is not a bundled game app. %@ is the filename of the application.");
+            
+            NSString *errorDescription = [NSString stringWithFormat: errorDescriptionFormat, appURL.lastPathComponent];
+            *outError = [NSError errorWithDomain: kBBValidationErrorDomain
+                                            code: kBBValidationUnsupportedApplication
+                                        userInfo: @{ NSLocalizedDescriptionKey : errorDescription }];
+        }
+        return NO;
+    }
+    
+    if (!gameboxName.pathExtension.length)
+        gameboxName = [gameboxName stringByAppendingPathExtension: @"boxer"];
+    
+    self.gameboxURL = [app URLForResource: gameboxName withExtension: nil];
+    self.appBundleIdentifier = [app bundleIdentifier];
+    self.appVersion = [app objectForInfoDictionaryKey: @"CFBundleShortVersionString"];
+    
+    NSString *iconName = [app objectForInfoDictionaryKey: @"CFBundleIconFile"];
+    if (!iconName.pathExtension.length)
+        iconName = [iconName stringByAppendingPathExtension: @"icns"];
+    self.appIconURL = [app URLForResource: iconName withExtension: nil];
+    
+    self.organizationName = [app objectForInfoDictionaryKey: @"BXOrganizationName"];
+    self.organizationURL = [app objectForInfoDictionaryKey: @"BXOrganizationWebsiteURL"];
+    
+    NSArray *appHelpLinks = [app objectForInfoDictionaryKey: @"BXHelpLinks"];
+    
+    NSMutableArray *helpLinks = [NSMutableArray arrayWithCapacity: appHelpLinks.count];
+    for (NSDictionary *linkInfo in appHelpLinks)
+    {
+        NSDictionary * parsedLinkInfo = @{
+                                        @"title": linkInfo[@"BXHelpLinkTitle"],
+                                        @"url": linkInfo[@"BXHelpLinkURL"]
+                                        };
+        
+        [helpLinks addObject: [parsedLinkInfo mutableCopy]];
+    }
+    self.helpLinks = helpLinks;
+    
+    return YES;
 }
+
 
 #pragma mark -
 #pragma mark Custom getters and setters
@@ -281,8 +337,11 @@ enum {
     NSString *appName = *ioValue;
     if (!appName.length)
     {
-        *outError = [self _validationErrorWithCode: kBBValidationValueMissing
-                                           message: @"Please specify a name for the application."];
+        if (outError)
+        {
+            *outError = [self _validationErrorWithCode: kBBValidationValueMissing
+                                               message: @"Please specify a name for the application."];
+        }
         return NO;
     }
     else
@@ -301,9 +360,11 @@ enum {
     NSString *bundleIdentifier = *ioValue;
     if (!bundleIdentifier.length)
     {
-        *outError = [self _validationErrorWithCode: kBBValidationValueMissing
-                                           message: @"Please specify a bundle identifier for the application: e.g. 'com.companyname.game-name'."];
-        
+        if (outError)
+        {
+            *outError = [self _validationErrorWithCode: kBBValidationValueMissing
+                                               message: @"Please specify a bundle identifier for the application: e.g. 'com.companyname.game-name'."];
+        }
         return NO;
     }
     else
@@ -445,7 +506,7 @@ enum {
 #pragma mark -
 #pragma mark Actions
 
-- (IBAction) createBundle: (id)sender
+- (IBAction) exportApp: (id)sender
 {
     NSSavePanel *panel = [NSSavePanel savePanel];
     panel.nameFieldStringValue = [self.appName stringByAppendingPathExtension: @"app"];
@@ -453,15 +514,14 @@ enum {
     panel.extensionHidden = YES;
     panel.canSelectHiddenExtension = NO;
     
-    [panel beginSheetModalForWindow: self.window completionHandler: ^(NSInteger result)
-    {
+    [panel beginSheetModalForWindow: self.window completionHandler: ^(NSInteger result) {
         if (result == NSFileHandlingPanelOKButton)
         {
-            //Dismiss any previous sheet before displaying error/success
+            //Dismiss the sheet before we begin
             [self.window.attachedSheet orderOut: self];
             
             self.busy = YES;
-            [self createAppAtDestinationURL: panel.URL completion:^(NSURL *appURL, NSError *error) {
+            [self createAppAtDestinationURL: panel.URL completion: ^(NSURL *appURL, NSError *error) {
                 self.busy = NO;
                 if (appURL)
                 {
@@ -486,9 +546,7 @@ enum {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
     
     panel.allowedFileTypes = @[(NSString *)kUTTypeAppleICNS];
-    panel.allowsOtherFileTypes = NO;
     panel.allowsMultipleSelection = NO;
-    panel.showsHiddenFiles = NO;
     panel.treatsFilePackagesAsDirectories = YES;
     
     [panel beginSheetModalForWindow: self.window completionHandler: ^(NSInteger result) {
@@ -497,6 +555,78 @@ enum {
             self.appIconURL = panel.URL;
         }
     }];
+}
+
+- (IBAction) importSettingsFromExistingApp: (id)sender
+{
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    
+    panel.allowedFileTypes = @[
+        (NSString *)kUTTypeApplicationBundle,
+        @"net.washboardabs.boxer-game-package"
+    ];
+    panel.allowsMultipleSelection = NO;
+    panel.treatsFilePackagesAsDirectories = NO;
+    
+    [panel beginSheetModalForWindow: self.window completionHandler: ^(NSInteger result) {
+        if (result == NSFileHandlingPanelOKButton)
+        {
+            [self application: NSApp openFile: panel.URL.path];
+        }
+    }];
+}
+
+- (BOOL) application: (NSApplication *)sender openFile: (NSString *)filename
+{
+    NSURL *fileURL = [NSURL fileURLWithPath: filename];
+    
+    //Determine whether this is a gamebox or a complete application
+    
+    BOOL opened;
+    NSError *openError;
+    
+    NSString *UTI;
+    BOOL retrievedUTI = [fileURL getResourceValue: &UTI
+                                           forKey: NSURLTypeIdentifierKey
+                                            error: &openError];
+    
+    if (retrievedUTI)
+    {
+        BOOL isGamebox = [[NSWorkspace sharedWorkspace] type: UTI conformsToType: @"net.washboardabs.boxer-game-package"];
+        
+        //If this is a gamebox, simply apply it as our current gamebox.
+        if (isGamebox)
+        {
+            self.gameboxURL = fileURL;
+            opened = YES;
+        }
+        //Otherwise, treat it as an application.
+        else
+        {
+            opened = [self _loadParamsFromAppAtURL: fileURL error: &openError];
+        }
+    }
+    else
+    {
+        opened = NO;
+    }
+    
+    if (opened)
+    {
+        //Upon successful loading, add this item to the Recent Documents menu.
+        [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL: fileURL];
+    }
+    else
+    {
+        [self.window.attachedSheet orderOut: self];
+        
+        [NSApp presentError: openError
+             modalForWindow: self.window
+                   delegate: nil
+         didPresentSelector: NULL
+                contextInfo: NULL];
+    }
+    return opened;
 }
 
 
