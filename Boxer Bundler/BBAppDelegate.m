@@ -12,6 +12,7 @@
 #import "NSURL+BXFilePaths.h"
 
 NSString * const kBBRowIndexSetDropType = @"BBRowIndexSetDropType";
+NSString * const kUTTypeGamebox = @"net.washboardabs.boxer-game-package";
 
 NSString * const kBBValidationErrorDomain = @"net.washboardabs.boxer-bundler.validationErrorDomain";
 
@@ -59,11 +60,12 @@ enum {
     //Set up the two-way binding for our dropzone
     [self.iconDropzone bind: @"imageURL" toObject: self withKeyPath: @"appIconURL" options: nil];
     [self bind: @"appIconURL" toObject: self.iconDropzone withKeyPath: @"imageURL" options: nil];
-    
 }
 
 - (void) applicationDidFinishLaunching: (NSNotification *)notification
 {
+    self.window.delegate = self;
+    [self.window registerForDraggedTypes: @[NSURLPboardType]];
     [self.window makeKeyAndOrderFront: self];
 }
 
@@ -286,7 +288,15 @@ enum {
     self.appBundleIdentifier = fullIdentifier;
 }
 
-
+- (NSString *) sanitisedAppName
+{
+    NSString *sanitisedName = self.appName;
+    
+    sanitisedName = [sanitisedName stringByReplacingOccurrencesOfString: @":" withString: @"-"];
+    sanitisedName = [sanitisedName stringByReplacingOccurrencesOfString: @"/" withString: @"-"];
+    sanitisedName = [sanitisedName stringByReplacingOccurrencesOfString: @"\\" withString: @"-"];
+    return sanitisedName;
+}
 
 #pragma mark -
 #pragma mark Property validation
@@ -301,7 +311,7 @@ enum {
         if (retrievedUTI)
         {
             //Check that it's really a gamebox
-            BOOL isGamebox = [[NSWorkspace sharedWorkspace] type: UTI conformsToType: @"net.washboardabs.boxer-game-package"];
+            BOOL isGamebox = [[NSWorkspace sharedWorkspace] type: UTI conformsToType: kUTTypeGamebox];
             if (!isGamebox)
             {
                 if (outError)
@@ -512,6 +522,60 @@ enum {
 
 
 #pragma mark -
+#pragma mark Drag-dropping files
+
+- (BOOL) _isLoadableFile: (NSURL *)fileURL
+{
+    NSString *UTI;
+    BOOL retrievedUTI = [fileURL getResourceValue: &UTI
+                                           forKey: NSURLTypeIdentifierKey
+                                            error: NULL];
+    
+    
+    if (retrievedUTI)
+    {
+        NSWorkspace *ws = [NSWorkspace sharedWorkspace];
+    
+        if ([ws type: UTI conformsToType: (NSString *)kUTTypeApplicationBundle])
+            return YES;
+        
+        if ([ws type: UTI conformsToType: kUTTypeGamebox])
+            return YES;
+    }
+    
+    return NO;
+}
+
+- (NSDragOperation) draggingEntered: (id <NSDraggingInfo>)sender
+{
+    NSPasteboard *pasteboard = sender.draggingPasteboard;
+    if ([pasteboard.types containsObject: NSURLPboardType])
+    {
+        NSURL *draggedURL = [NSURL URLFromPasteboard: pasteboard];
+        if ([self _isLoadableFile: draggedURL])
+        {
+            return NSDragOperationLink;
+        }
+    }
+    return NSDragOperationNone;
+}
+
+- (BOOL) performDragOperation: (id <NSDraggingInfo>)sender
+{
+    NSPasteboard *pasteboard = sender.draggingPasteboard;
+    if ([pasteboard.types containsObject: NSURLPboardType])
+    {
+        NSURL *draggedURL = [NSURL URLFromPasteboard: pasteboard];
+        if ([self _isLoadableFile: draggedURL])
+        {
+            return [self application: NSApp openFile: draggedURL.path];
+        }
+    }
+    return NO;
+}
+
+
+#pragma mark -
 #pragma mark Actions
 
 - (IBAction) exportApp: (id)sender
@@ -578,7 +642,7 @@ enum {
     
     panel.allowedFileTypes = @[
         (NSString *)kUTTypeApplicationBundle,
-        @"net.washboardabs.boxer-game-package"
+        kUTTypeGamebox
     ];
     panel.allowsMultipleSelection = NO;
     panel.treatsFilePackagesAsDirectories = NO;
@@ -607,7 +671,7 @@ enum {
     
     if (retrievedUTI)
     {
-        BOOL isGamebox = [[NSWorkspace sharedWorkspace] type: UTI conformsToType: @"net.washboardabs.boxer-game-package"];
+        BOOL isGamebox = [[NSWorkspace sharedWorkspace] type: UTI conformsToType: kUTTypeGamebox];
         
         //If this is a gamebox, simply apply it as our current gamebox.
         if (isGamebox)

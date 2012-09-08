@@ -65,7 +65,7 @@
     //Import the gamebox into the new app.
     NSURL *importedGameboxURL = [self _importGameboxFromURL: self.gameboxURL
                                                intoAppAtURL: tempAppURL
-                                                   withName: self.appName
+                                                   withName: self.sanitisedAppName
                                                  identifier: self.appBundleIdentifier
                                                       error: outError];
     
@@ -141,7 +141,7 @@
         NSURL *helpbookSouceURL = [appResourceURL URLByAppendingPathComponent: helpbookName];
         
         //While we're at it, rename the help book to reflect the application name.
-        NSString *destinationHelpbookName = [self.appName stringByAppendingPathExtension: @"help"];
+        NSString *destinationHelpbookName = [self.sanitisedAppName stringByAppendingPathExtension: @"help"];
         
         NSURL *helpbookURL = [self _importHelpbookFromURL: helpbookSouceURL
                                              intoAppAtURL: tempAppURL
@@ -232,9 +232,7 @@
     }
     
     //Clean up the gamebox while we're at it: eliminate any custom icon and unhide its file extension.
-    [destinationURL setResourceValue: nil
-                              forKey: NSURLCustomIconKey
-                               error: NULL];
+    [[NSWorkspace sharedWorkspace] setIcon: nil forFile: destinationURL.path options: 0];
     
     [destinationURL setResourceValue: @NO
                               forKey: NSURLHasHiddenExtensionKey

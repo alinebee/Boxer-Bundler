@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @class BBIconDropzone;
-@interface BBAppDelegate : NSObject <NSApplicationDelegate, NSTableViewDataSource>
+@interface BBAppDelegate : NSObject <NSApplicationDelegate, NSTableViewDataSource, NSWindowDelegate>
 
 #pragma mark -
 #pragma mark Properties
@@ -30,6 +30,10 @@
 @property (nonatomic) BOOL ctrlClickEnabled;
 
 @property (readonly, getter=isBusy) BOOL busy;
+
+//A version of the app name suitable for use as a filename.
+//This replaces or removes restricted characters like :, / and \.
+@property (readonly, nonatomic) NSString *sanitisedAppName;
 
 //An editable array of help links
 @property (strong, nonatomic) NSMutableArray *helpLinks;
