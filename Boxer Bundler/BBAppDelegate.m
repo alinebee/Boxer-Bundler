@@ -169,9 +169,15 @@ enum {
 
 - (BOOL) _loadParamsFromAppAtURL: (NSURL *)appURL error: (NSError **)outError
 {
+    //IMPLEMENTATION NOTE: we used to load the app up as a bundle and use NSBundle's info accessor
+    //methods, but NSBundle heavily caches the Info.plist so we were receiving outdated info when
+    //reloading a previously-saved app. We now load the info plist directly as a dictionary.
     NSBundle *app = [NSBundle bundleWithURL: appURL];
     
-    NSString *gameboxName = [app objectForInfoDictionaryKey: @"BXBundledGameboxName"];
+    NSURL *infoURL = [appURL URLByAppendingPathComponent: @"Contents/Info.plist"];
+    NSDictionary *appInfo = [NSDictionary dictionaryWithContentsOfURL: infoURL];
+    
+    NSString *gameboxName = [appInfo objectForKey: @"BXBundledGameboxName"];
     
     if (gameboxName == nil)
     {
@@ -194,19 +200,19 @@ enum {
     
     //First, import everything we can from the application's Info.plist file.
     self.gameboxURL = [app URLForResource: gameboxName withExtension: nil];
-    self.appBundleIdentifier = [app bundleIdentifier];
-    self.appVersion = [app objectForInfoDictionaryKey: @"CFBundleShortVersionString"];
-    self.appName = [app objectForInfoDictionaryKey: @"CFBundleName"];
+    self.appBundleIdentifier = [appInfo objectForKey: (NSString *)kCFBundleIdentifierKey];
+    self.appVersion = [appInfo objectForKey: @"CFBundleShortVersionString"];
+    self.appName = [appInfo objectForKey: @"CFBundleName"];
     
-    NSString *iconName = [app objectForInfoDictionaryKey: @"CFBundleIconFile"];
+    NSString *iconName = [appInfo objectForKey: @"CFBundleIconFile"];
     if (!iconName.pathExtension.length)
         iconName = [iconName stringByAppendingPathExtension: @"icns"];
     self.appIconURL = [app URLForResource: iconName withExtension: nil];
     
-    self.organizationName = [app objectForInfoDictionaryKey: @"BXOrganizationName"];
-    self.organizationURL = [app objectForInfoDictionaryKey: @"BXOrganizationWebsiteURL"];
+    self.organizationName = [appInfo objectForKey: @"BXOrganizationName"];
+    self.organizationURL = [appInfo objectForKey: @"BXOrganizationWebsiteURL"];
     
-    NSArray *appHelpLinks = [app objectForInfoDictionaryKey: @"BXHelpLinks"];
+    NSArray *appHelpLinks = [appInfo objectForKey: @"BXHelpLinks"];
     
     NSMutableArray *helpLinks = [NSMutableArray arrayWithCapacity: appHelpLinks.count];
     for (NSDictionary *linkInfo in appHelpLinks)
@@ -285,7 +291,10 @@ enum {
     }
     
     NSString *fullIdentifier = [NSString stringWithFormat: @"%@.%@", baseIdentifier, fragment];
-    self.appBundleIdentifier = fullIdentifier;
+    
+    BOOL isValid = [self validateAppBundleIdentifier: &fullIdentifier error: NULL];
+    if (isValid)
+        self.appBundleIdentifier = fullIdentifier;
 }
 
 - (NSString *) sanitisedAppName
@@ -365,10 +374,14 @@ enum {
     else
     {
         //Make a token effort to sanitise the application name so that it's safe to use in filenames.
+        //CURRENTLY UNUSED: instead we just let the app name be whatever it wants to be, and
+        //just sanitise it for use as a filename.
+        /*
         appName = [appName stringByReplacingOccurrencesOfString: @":" withString: @" - "];
         appName = [appName stringByReplacingOccurrencesOfString: @"/" withString: @""];
         
         *ioValue = appName;
+         */
     }
     return YES;
 }
@@ -387,8 +400,12 @@ enum {
     }
     else
     {
-        bundleIdentifier = [bundleIdentifier.lowercaseString stringByReplacingOccurrencesOfString: @" " withString: @"-"];
+        NSLog(@"VALIDATING BUNDLE IDENTIFIER");
+        bundleIdentifier = bundleIdentifier.lowercaseString;
+        bundleIdentifier = [bundleIdentifier stringByReplacingOccurrencesOfString: @" " withString: @"-"];
         bundleIdentifier = [bundleIdentifier stringByReplacingOccurrencesOfString: @"_" withString: @"-"];
+        bundleIdentifier = [bundleIdentifier stringByReplacingOccurrencesOfString: @":" withString: @"-"];
+        bundleIdentifier = [bundleIdentifier stringByReplacingOccurrencesOfString: @"--" withString: @"-"];
         
         *ioValue = bundleIdentifier;
     }
@@ -588,7 +605,7 @@ enum {
     
     
     NSSavePanel *panel = [NSSavePanel savePanel];
-    panel.nameFieldStringValue = [self.appName stringByAppendingPathExtension: @"app"];
+    panel.nameFieldStringValue = [self.sanitisedAppName stringByAppendingPathExtension: @"app"];
     panel.allowedFileTypes = @[(NSString *)kUTTypeApplicationBundle];
     panel.extensionHidden = YES;
     panel.canSelectHiddenExtension = NO;

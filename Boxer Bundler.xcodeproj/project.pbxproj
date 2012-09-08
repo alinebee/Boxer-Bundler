@@ -13,7 +13,6 @@
 		9FDFB49B15DC04B7004EA615 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FDFB49A15DC04B7004EA615 /* Cocoa.framework */; };
 		9FDFB4A515DC04B7004EA615 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9FDFB4A315DC04B7004EA615 /* InfoPlist.strings */; };
 		9FDFB4A715DC04B7004EA615 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FDFB4A615DC04B7004EA615 /* main.m */; };
-		9FDFB4AB15DC04B7004EA615 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 9FDFB4A915DC04B7004EA615 /* Credits.rtf */; };
 		9FDFB4AE15DC04B7004EA615 /* BBAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FDFB4AD15DC04B7004EA615 /* BBAppDelegate.m */; };
 		9FDFB4B115DC04B7004EA615 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9FDFB4AF15DC04B7004EA615 /* MainMenu.xib */; };
 		9FDFB4B915DC0BF8004EA615 /* BBIconDropzone.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FDFB4B815DC0BF8004EA615 /* BBIconDropzone.m */; };
@@ -37,7 +36,6 @@
 		9FDFB4A415DC04B7004EA615 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		9FDFB4A615DC04B7004EA615 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		9FDFB4A815DC04B7004EA615 /* Boxer Bundler-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Boxer Bundler-Prefix.pch"; sourceTree = "<group>"; };
-		9FDFB4AA15DC04B7004EA615 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		9FDFB4AC15DC04B7004EA615 /* BBAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BBAppDelegate.h; sourceTree = "<group>"; };
 		9FDFB4AD15DC04B7004EA615 /* BBAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BBAppDelegate.m; sourceTree = "<group>"; };
 		9FDFB4B015DC04B7004EA615 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
@@ -141,7 +139,6 @@
 				9FDFB4A315DC04B7004EA615 /* InfoPlist.strings */,
 				9FDFB4A615DC04B7004EA615 /* main.m */,
 				9FDFB4A815DC04B7004EA615 /* Boxer Bundler-Prefix.pch */,
-				9FDFB4A915DC04B7004EA615 /* Credits.rtf */,
 				9FDFB4BD15DC1BB3004EA615 /* UserDefaults.plist */,
 			);
 			name = "Supporting Files";
@@ -200,7 +197,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				9FDFB4A515DC04B7004EA615 /* InfoPlist.strings in Resources */,
-				9FDFB4AB15DC04B7004EA615 /* Credits.rtf in Resources */,
 				9FDFB4B115DC04B7004EA615 /* MainMenu.xib in Resources */,
 				9FDFB4BE15DC1BB3004EA615 /* UserDefaults.plist in Resources */,
 				9FDFB4C015DC1F9B004EA615 /* app.icns in Resources */,
@@ -233,14 +229,6 @@
 				9FDFB4A415DC04B7004EA615 /* en */,
 			);
 			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-		9FDFB4A915DC04B7004EA615 /* Credits.rtf */ = {
-			isa = PBXVariantGroup;
-			children = (
-				9FDFB4AA15DC04B7004EA615 /* en */,
-			);
-			name = Credits.rtf;
 			sourceTree = "<group>";
 		};
 		9FDFB4AF15DC04B7004EA615 /* MainMenu.xib */ = {
