@@ -16,24 +16,17 @@ NSString * const kUTTypeGamebox = @"net.washboardabs.boxer-game-package";
 
 NSString * const kBBValidationErrorDomain = @"net.washboardabs.boxer-bundler.validationErrorDomain";
 
-enum {
-    kBBValidationValueMissing,
-    kBBValidationInvalidValue,
-    kBBValidationUnsupportedApplication
-};
-
 
 @interface BBAppDelegate ()
 
+//Overridden to make these properties read-write.
 @property (assign, getter=isBusy) BOOL busy;
+@property (nonatomic) BOOL launchPanelAvailable;
 
 @end
 
 
 @implementation BBAppDelegate
-//Defined because we have custom setters for these
-@synthesize appName = _appName;
-@synthesize gameboxURL = _gameboxURL;
 
 #pragma mark -
 #pragma mark Application lifecycle
@@ -86,7 +79,17 @@ enum {
 
 + (NSArray *) _persistableKeys
 {
-    return @[@"appName", @"appBundleIdentifier", @"appVersion", @"organizationName", @"organizationURL", @"showsHotkeyWarning", @"ctrlClickEnabled"];
+    return @[
+        @"appName",
+        @"appBundleIdentifier",
+        @"appVersion",
+        @"organizationName",
+        @"organizationURL",
+        @"showsHotkeyWarning",
+        @"showsAspectCorrectionToggle",
+        @"ctrlClickEnabled",
+        @"seamlessMouseEnabled",
+    ];
 }
 
 - (void) _loadParamsFromUserDefaults
@@ -235,12 +238,32 @@ enum {
     NSNumber *showsHotkeyWarningFlag = [appUserDefaults objectForKey: @"showHotkeyWarning"];
     if (showsHotkeyWarningFlag)
         self.showsHotkeyWarning = showsHotkeyWarningFlag.boolValue;
+    else
+        self.showsHotkeyWarning = YES;
+    
+    NSNumber *aspectCorrectionToggleFlag = [appUserDefaults objectForKey: @"showAspectCorrectionToggle"];
+    if (aspectCorrectionToggleFlag)
+        self.showsAspectCorrectionToggle = aspectCorrectionToggleFlag.boolValue;
+    else
+        self.showsAspectCorrectionToggle = YES;
     
     NSNumber *ctrlClickShortcutMask = [appGameDefaults objectForKey: @"mouseButtonModifierRight"];
     if (ctrlClickShortcutMask)
-    {
         self.ctrlClickEnabled = (ctrlClickShortcutMask.integerValue == 262144);
-    }
+    else
+        self.ctrlClickEnabled = YES;
+    
+    NSNumber *seamlessMouseFlag = [appGameDefaults objectForKey: @"trackMouseWhileUnlocked"];
+    if (seamlessMouseFlag)
+        self.seamlessMouseEnabled = seamlessMouseFlag.boolValue;
+    else
+        self.seamlessMouseEnabled = NO;
+    
+    NSNumber *showLaunchPanelFlag = [appGameDefaults objectForKey: @"alwaysShowLaunchPanel"];
+    if (showLaunchPanelFlag)
+        self.showsLaunchPanelAlways = showLaunchPanelFlag.boolValue;
+    else
+        self.showsLaunchPanelAlways = NO;
     
     return YES;
 }
@@ -249,14 +272,26 @@ enum {
 #pragma mark -
 #pragma mark Custom getters and setters
 
+- (BOOL) isUnbranded
+{
+    return (self.organizationName.length == 0);
+}
+
 - (void) setGameboxURL: (NSURL *)URL
 {
     if (![URL isEqual: self.gameboxURL])
     {
         _gameboxURL = URL;
         
-        //Update the application name whenever the gamebox changes
-        self.appName = URL.lastPathComponent.stringByDeletingPathExtension;
+        //Check what launch options are available for this gamebox.
+        if (URL)
+        {
+            NSArray *launchers = [self.class launchersForGameboxAtURL: URL];
+            self.launchPanelAvailable = (launchers.count > 1);
+            
+            //Update the application name whenever the gamebox changes
+            self.appName = URL.lastPathComponent.stringByDeletingPathExtension;
+        }
     }
 }
 
@@ -326,6 +361,17 @@ enum {
                 if (outError)
                     *outError = [self _validationErrorWithCode: kBBValidationInvalidValue
                                                        message: @"Please supply a standard gamebox produced by Boxer."];
+                return NO;
+            }
+            
+            //Check that the gamebox has any launchers. If not, it's not fully prepared and suitable for appification.
+            NSArray *launchers = [self.class launchersForGameboxAtURL: gameboxURL];
+            if (!launchers.count)
+            {
+                if (outError)
+                    *outError = [self _validationErrorWithCode: kBBValidationInvalidValue
+                                                       message: @"This gamebox does not have any launch options. Use Boxer 1.4 or higher to add one or more launch options to the gamebox."];
+                
                 return NO;
             }
         }
@@ -422,6 +468,7 @@ enum {
     return YES;
 }
 
+/* These fields are now optional.
 - (BOOL) validateOrganizationName: (id *)ioValue error: (NSError **)outError
 {
     NSString *name = *ioValue;
@@ -448,13 +495,13 @@ enum {
     }
     return YES;
 }
+ */
 
 - (NSError *) _validationErrorWithCode: (NSInteger)errCode message: (NSString *)message
 {
     NSDictionary *userInfo = @{NSLocalizedDescriptionKey: message};
     return [NSError errorWithDomain: kBBValidationErrorDomain code: errCode userInfo: userInfo];
 }
-
 
 
 #pragma mark -
@@ -739,4 +786,24 @@ enum {
     
     return identifier;
 }
+
++ (NSArray *) launchersForGameboxAtURL: (NSURL *)gameboxURL
+{
+    NSURL *gameInfoURL = [gameboxURL URLByAppendingPathComponent: @"Game Info.plist"];
+    NSMutableDictionary *gameInfo = [NSMutableDictionary dictionaryWithContentsOfURL: gameInfoURL];
+    
+    NSArray *launchers = gameInfo[@"BXLaunchers"];
+    NSMutableArray *resolvedLaunchers = [NSMutableArray arrayWithCapacity: launchers.count];
+    for (NSDictionary *launcher in launchers)
+    {
+        NSMutableDictionary *resolvedLauncher = launcher.mutableCopy;
+        //Paths are stored as relative to the gamebox
+        resolvedLauncher[@"BXLauncherURL"] = [gameboxURL URLByAppendingPathComponent: launcher[@"BXLauncherPath"]];
+        
+        [resolvedLaunchers addObject: resolvedLauncher];
+    }
+
+    return resolvedLaunchers;
+}
+
 @end

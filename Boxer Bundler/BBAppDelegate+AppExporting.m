@@ -90,20 +90,34 @@
         appInfo[@"CFBundleIconFile"] = iconURL.lastPathComponent;
     }
     
-    //Fill in various variables in the info.plist.
+    //Fill in various variables in the Info.plist.
     CFTimeZoneRef systemTimeZone = CFTimeZoneCopySystem();
     CFGregorianDate currentDate = CFAbsoluteTimeGetGregorianDate(CFAbsoluteTimeGetCurrent(), systemTimeZone);
     CFRelease(systemTimeZone);
     
     NSString *year = [NSString stringWithFormat: @"%04d", currentDate.year];
-    NSDictionary *substitutions = @{
-        @"{{ORGANIZATION_NAME}}":   self.organizationName,
-        @"{{BUNDLE_IDENTIFIER}}":   self.appBundleIdentifier,
-        @"{{APPLICATION_NAME}}":    self.appName,
-        @"{{ORGANIZATION_URL}}":    self.organizationURL,
-        @"{{APPLICATION_VERSION}}": self.appVersion,
-        @"{{YEAR}}":                year
-    };
+    
+    NSDictionary *substitutions;
+    if (self.isUnbranded)
+    {
+        substitutions = @{
+            @"{{BUNDLE_IDENTIFIER}}":   self.appBundleIdentifier,
+            @"{{APPLICATION_NAME}}":    self.appName,
+            @"{{APPLICATION_VERSION}}": self.appVersion,
+            @"{{YEAR}}":                year
+        };
+    }
+    else
+    {
+        substitutions = @{
+            @"{{ORGANIZATION_NAME}}":   self.organizationName,
+            @"{{BUNDLE_IDENTIFIER}}":   self.appBundleIdentifier,
+            @"{{APPLICATION_NAME}}":    self.appName,
+            @"{{ORGANIZATION_URL}}":    self.organizationURL,
+            @"{{APPLICATION_VERSION}}": self.appVersion,
+            @"{{YEAR}}":                year
+        };
+    }
     
     [self _rewritePlist: appInfo withSubstitutions: substitutions];
     
@@ -118,21 +132,19 @@
     
     
     //Tweak options in the user defaults and game defaults if necessary.
-    if (!self.ctrlClickEnabled)
-    {
-        NSURL *gameDefaultsURL = [appResourceURL URLByAppendingPathComponent: @"GameDefaults.plist"];
-        NSMutableDictionary *gameDefaults = [NSMutableDictionary dictionaryWithContentsOfURL: gameDefaultsURL];
-        gameDefaults[@"mouseButtonModifierRight"] = @0;
-        [gameDefaults writeToURL: gameDefaultsURL atomically: YES];
-    }
+    NSURL *gameDefaultsURL = [appResourceURL URLByAppendingPathComponent: @"GameDefaults.plist"];
+    NSMutableDictionary *gameDefaults = [NSMutableDictionary dictionaryWithContentsOfURL: gameDefaultsURL];
+        
+    gameDefaults[@"mouseButtonModifierRight"] = (self.ctrlClickEnabled) ? @262144 : @0;
+    gameDefaults[@"trackMouseWhileUnlocked"] = @(self.seamlessMouseEnabled);
+    gameDefaults[@"alwaysShowLaunchPanel"] = @(self.showsLaunchPanelAlways);
+    [gameDefaults writeToURL: gameDefaultsURL atomically: YES];
     
-    if (!self.showsHotkeyWarning)
-    {
-        NSURL *userDefaultsURL = [appResourceURL URLByAppendingPathComponent: @"UserDefaults.plist"];
-        NSMutableDictionary *userDefaults = [NSMutableDictionary dictionaryWithContentsOfURL: userDefaultsURL];
-        userDefaults[@"showHotkeyWarning"] = @NO;
-        [userDefaults writeToURL: userDefaultsURL atomically: YES];
-    }
+    NSURL *userDefaultsURL = [appResourceURL URLByAppendingPathComponent: @"UserDefaults.plist"];
+    NSMutableDictionary *userDefaults = [NSMutableDictionary dictionaryWithContentsOfURL: userDefaultsURL];
+    userDefaults[@"showHotkeyWarning"] = @(self.showsHotkeyWarning);
+    userDefaults[@"showAspectCorrectionToggle"] = @(self.showsAspectCorrectionToggle);
+    [userDefaults writeToURL: userDefaultsURL atomically: YES];
     
     //Now let's get to work on the help book.
     NSString *helpbookName = appInfo[@"CFBundleHelpBookFolder"];
@@ -140,53 +152,84 @@
     {
         NSURL *helpbookSouceURL = [appResourceURL URLByAppendingPathComponent: helpbookName];
         
-        //While we're at it, rename the help book to reflect the application name.
-        NSString *destinationHelpbookName = [self.sanitisedAppName stringByAppendingPathExtension: @"help"];
-        
-        NSURL *helpbookURL = [self _importHelpbookFromURL: helpbookSouceURL
-                                             intoAppAtURL: tempAppURL
-                                                 withName: destinationHelpbookName
-                                                    error: outError];
-        
-        if (helpbookURL == nil)
+        //TWEAK: if this is a branding-less app, delete the help file on the presumption that it's brand-specific.
+        if (self.isUnbranded)
         {
-            [manager removeItemAtURL: baseTempURL error: NULL];
-            return nil;
+            [appInfo removeObjectForKey: @"CFBundleHelpBookFolder"];
+            [manager removeItemAtURL: helpbookSouceURL error: NULL];
         }
-        
-        appInfo[@"CFBundleHelpBookFolder"] = destinationHelpbookName;
-        
-        
-        //Rewrite various variables in the helpbook's own info.plist.
-        NSURL *helpbookInfoURL = [helpbookURL URLByAppendingPathComponent: @"Contents/Info.plist"];
-        NSURL *helpbookResourceURL = [helpbookURL URLByAppendingPathComponent: @"Contents/Resources/"];
-        NSMutableDictionary *helpbookInfo = [NSMutableDictionary dictionaryWithContentsOfURL: helpbookInfoURL];
-        
-        [self _rewritePlist: helpbookInfo withSubstitutions: substitutions];
-        
-        //Update the help book's icons.
-        if (self.appIconURL)
+        else
         {
-            NSURL *helpbookIconURL = [self _applyIconFromURL: self.appIconURL
-                                             toHelpbookAtURL: helpbookURL
-                                                       error: outError];
+            //While we're at it, rename the help book to reflect the application name.
+            NSString *destinationHelpbookName = [self.sanitisedAppName stringByAppendingPathExtension: @"help"];
             
-            if (helpbookIconURL == nil)
+            NSURL *helpbookURL = [self _importHelpbookFromURL: helpbookSouceURL
+                                                 intoAppAtURL: tempAppURL
+                                                     withName: destinationHelpbookName
+                                                        error: outError];
+            
+            if (helpbookURL == nil)
             {
+                [manager removeItemAtURL: baseTempURL error: NULL];
                 return nil;
             }
             
-            NSString *relativeHelpbookIconPath = [helpbookIconURL pathRelativeToURL: helpbookResourceURL];
-            helpbookInfo[@"HPDBookIconPath"] = relativeHelpbookIconPath;
+            appInfo[@"CFBundleHelpBookFolder"] = destinationHelpbookName;
+            
+            //Rewrite various variables in the helpbook's own info.plist.
+            NSURL *helpbookInfoURL = [helpbookURL URLByAppendingPathComponent: @"Contents/Info.plist"];
+            NSURL *helpbookResourceURL = [helpbookURL URLByAppendingPathComponent: @"Contents/Resources/"];
+            NSMutableDictionary *helpbookInfo = [NSMutableDictionary dictionaryWithContentsOfURL: helpbookInfoURL];
+            
+            [self _rewritePlist: helpbookInfo withSubstitutions: substitutions];
+            
+            //Update the help book's icons.
+            if (self.appIconURL)
+            {
+                NSURL *helpbookIconURL = [self _applyIconFromURL: self.appIconURL
+                                                 toHelpbookAtURL: helpbookURL
+                                                           error: outError];
+                
+                if (helpbookIconURL == nil)
+                {
+                    return nil;
+                }
+                
+                NSString *relativeHelpbookIconPath = [helpbookIconURL pathRelativeToURL: helpbookResourceURL];
+                helpbookInfo[@"HPDBookIconPath"] = relativeHelpbookIconPath;
+            }
+            
+            //Write all of our changes to the helpbook's plist back into the helpbook.
+            [helpbookInfo writeToURL: helpbookInfoURL atomically: YES];
         }
-        
-        //Write all of our changes to the helpbook's plist back into the helpbook.
-        [helpbookInfo writeToURL: helpbookInfoURL atomically: YES];
     }
     
+    //TWEAK: if this is to be a branding-less app, remove all resources that may contain branding.
+    if (self.isUnbranded)
+    {
+        NSArray *brandedResources = @[
+            @"StandaloneLogo.png",
+            @"StandaloneLogo@2x.png",
+            @"English.lproj/Credits.html",
+            @"Help.help",
+        ];
+        
+        for (NSString *resourceName in brandedResources)
+        {
+            NSURL *resourceURL = [appResourceURL URLByAppendingPathComponent: resourceName];
+            [manager removeItemAtURL: resourceURL error: NULL];
+        }
+    
+        [appInfo removeObjectForKey: @"BXOrganizationName"];
+        [appInfo removeObjectForKey: @"BXOrganizationWebsiteURL"];
+        [appInfo removeObjectForKey: @"NSHumanReadableCopyright"];
+    }
+
     //Write all of our changes to the app's plist back into the app.
     [appInfo writeToURL: appInfoURL atomically: YES];
-    
+
+
+
     //Finally, move the finished app from the temporary location to the final destination.
     NSURL *finalDestinationURL = nil;
     BOOL swapped = [manager replaceItemAtURL: destinationURL
@@ -244,6 +287,7 @@
         NSURL *gameInfoURL = [destinationURL URLByAppendingPathComponent: @"Game Info.plist"];
         NSMutableDictionary *gameInfo = [NSMutableDictionary dictionaryWithContentsOfURL: gameInfoURL];
         gameInfo[@"BXGameIdentifier"] = gameIdentifier;
+        gameInfo[@"BXGameIdentifierType"] = @(kBXGameIdentifierReverseDNS);
         [gameInfo writeToURL: gameInfoURL atomically: YES];
     }
     

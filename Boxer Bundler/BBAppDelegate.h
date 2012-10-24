@@ -8,6 +8,33 @@
 
 #import <Cocoa/Cocoa.h>
 
+
+#pragma mark -
+#pragma mark Constants
+
+extern NSString * const kBBRowIndexSetDropType;
+extern NSString * const kUTTypeGamebox;
+extern NSString * const kBBValidationErrorDomain;
+
+enum {
+    kBBValidationValueMissing,
+    kBBValidationInvalidValue,
+    kBBValidationUnsupportedApplication
+};
+
+enum {
+	kBXGameIdentifierUserSpecified	= 0,	//Manually specified type.
+	kBXGameIdentifierUUID			= 1,	//Standard UUID. Generated for empty gameboxes.
+	kBXGameIdentifierEXEDigest		= 2,	//SHA1 digest of each EXE file in the gamebox.
+	kBXGameIdentifierReverseDNS		= 3,	//Reverse-DNS (net.washboardabs.boxer)-style identifer.
+};
+
+
+
+#pragma mark -
+#pragma mark Interface
+
+
 @class BBIconDropzone;
 @interface BBAppDelegate : NSObject <NSApplicationDelegate, NSTableViewDataSource, NSWindowDelegate>
 
@@ -26,16 +53,27 @@
 @property (copy, nonatomic) NSString *organizationName;
 @property (copy, nonatomic) NSString *organizationURL;
 
+@property (nonatomic) BOOL showsLaunchPanelAlways;
 @property (nonatomic) BOOL showsHotkeyWarning;
+@property (nonatomic) BOOL showsAspectCorrectionToggle;
 @property (nonatomic) BOOL ctrlClickEnabled;
+@property (nonatomic) BOOL seamlessMouseEnabled;
 
+@property (readonly, getter=isUnbranded) BOOL unbranded;
+
+//Will be YES while app generation is in progress. Disables the UI.
 @property (readonly, getter=isBusy) BOOL busy;
 
 //A version of the app name suitable for use as a filename.
 //This replaces or removes restricted characters like :, / and \.
 @property (readonly, nonatomic) NSString *sanitisedAppName;
 
-//An editable array of help links
+//Whether the launch panel is available for this gamebox:
+//will be NO if the gamebox has only one launch option.
+//Used for selectively disabling launch-related options.
+@property (readonly, nonatomic) BOOL launchPanelAvailable;
+
+//An editable array of help links.
 @property (strong, nonatomic) NSMutableArray *helpLinks;
 
 
@@ -56,4 +94,6 @@
 //Given a filename, returns a name suitable for inclusion in a bundle identifier.
 + (NSString *) bundleIdentifierFragmentFromString: (NSString *)inString;
 
+//Given the URL of a gamebox, returns an array of launch options found inside that gamebox.
++ (NSArray *) launchersForGameboxAtURL: (NSURL *)gameboxURL;
 @end
